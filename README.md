@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Librería Benticuaga - E-commerce
 
-## Getting Started
+Este es el repositorio oficial del E-commerce para **Librería Benticuaga**. 
+El proyecto consiste en una tienda online completa con carrito de compras, gestión de usuarios, catálogos de productos y cobros integrados mediante Mercado Pago.
 
-First, run the development server:
+## 🚀 Tecnologías y Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Este proyecto está construido utilizando las últimas tecnologías del ecosistema moderno de desarrollo web:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Framework**: [Next.js](https://nextjs.org/) (App Router, Version 16)
+- **UI & Componentes**: [React 19](https://react.dev/)
+- **Lenguaje**: [TypeScript](https://www.typescriptlang.org/)
+- **Estilos**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Base de Datos & ORM**: [Prisma](https://www.prisma.io/)
+- **Pagos**: [Mercado Pago SDK](https://www.mercadopago.com.ar/developers/)
+- **Autenticación**: JSON Web Tokens (JWT) y bcrypt
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📦 Características Principales
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Catálogo de Productos**: Exploración de productos por categorías.
+- **Carrito de Compras**: Gestión ágil de ítems agregados al carrito utilizando Contextos (`CartContext`).
+- **Checkout Integrado**: Flujo de pagos seguro con Mercado Pago (Checkout Pro / transparente).
+- **Cuentas de Usuario**: Registro, login y visualización del historial de órdenes y estado de cuenta.
+- **Gestión Administrativa**: Capacidad para subir productos masivamente vía archivos CSV.
+- **Webhooks**: Procesamiento asincrónico de eventos de pago para actualizar automáticamente el estado de los pedidos.
 
-## Learn More
+## 🛠️ Instalación y Configuración Local
 
-To learn more about Next.js, take a look at the following resources:
+1. **Clonar el repositorio**:
+   ```bash
+   git clone https://github.com/dmampel/libreria-benticuaga.git
+   cd stationery-ecommerce
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Instalar dependencias**:
+   (Recomendamos usar `pnpm` como está configurado en el proyecto)
+   ```bash
+   pnpm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Configurar variables de entorno**:
+   Crea un archivo `.env` o `.env.local` en la raíz del proyecto y agrega tus claves (ej: URLs de base de datos, Secret JWT, Access Token de Mercado Pago).
 
-## Deploy on Vercel
+4. **Correr migraciones de Base de Datos (Prisma)**:
+   ```bash
+   npx prisma generate
+   npx prisma migrate dev
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. **Iniciar el servidor de desarrollo**:
+   ```bash
+   pnpm dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+6. **Abrir en el navegador**:
+   Ve a [http://localhost:3000](http://localhost:3000) para ver la página renderizada.
+
+## 📝 Scripts Disponibles
+
+- `pnpm dev`: Inicia la aplicación en modo desarrollo.
+- `pnpm build`: Construye la aplicación para producción.
+- `pnpm start`: Inicia el servidor optimizado con la build de producción.
+- `pnpm lint`: Examina la sintaxis y buenas prácticas del código con ESLint.
