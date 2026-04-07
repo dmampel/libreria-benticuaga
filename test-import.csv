@@ -1,0 +1,4 @@
+cod_prod,desc,precio1,precio2,stk,img_url
+P001,Cuaderno A4,5.50,4.50,150,https://example.com/p001.jpg
+P002,Bolígrafo Azul,1.20,0.95,1000,https://example.com/p002.jpg
+P003,Marcadores,3.00,2.50,500,https://example.com/p003.jpg

@@ -1,0 +1,101 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============ CATEGORIES ============
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  icon      String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+// ============ PRODUCTS ============
+model Product {
+  id             String     @id // from CSV (cod_prod)
+  name           String
+  description    String?
+  retailPrice    Float // precio1 from CSV
+  wholesalePrice Float // precio2 from CSV
+  stock          Int // stk from CSV
+  image          String // img_url from CSV
+  categoryId     String?
+  category       Category?  @relation(fields: [categoryId], references: [id])
+  orderItems     OrderItem[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([categoryId])
+}
+
+// ============ USERS ============
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String // bcrypt hash
+  role      Role     @default(RETAIL)
+  firstName   String?
+  lastName    String?
+  address     String?
+  phone       String?
+  cuit        String?
+  razonSocial String?
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+enum Role {
+  RETAIL
+  WHOLESALE
+}
+
+// ============ ORDERS ============
+model Order {
+  id        String      @id @default(uuid())
+  userId    String? // nullable for guest orders (Phase 1 MVP — no auth)
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items     OrderItem[]
+  total     Float
+  status        OrderStatus @default(PENDING)
+  userRole      String      @default("RETAIL") // pricing tier at time of order
+  paymentMethod String?     // "MERCADO_PAGO" | "WHATSAPP" | null
+  transactionId String?     // MP payment ID when confirmed
+  createdAt     DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([userId])
+}
+
+enum OrderStatus {
+  PENDING // Waiting for WhatsApp confirmation
+  CONFIRMED // Confirmed by customer
+  CANCELLED // Cancelled
+}
+
+// ============ ORDER ITEMS ============
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float // price at purchase time
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
