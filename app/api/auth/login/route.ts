@@ -30,6 +30,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!user.emailVerified) {
+      return NextResponse.json(
+        { success: false, error: "Verificá tu email antes de ingresar. Revisá tu bandeja de entrada.", code: "EMAIL_NOT_VERIFIED" },
+        { status: 403 }
+      )
+    }
+
     const token = generateToken({
       id: user.id,
       email: user.email,

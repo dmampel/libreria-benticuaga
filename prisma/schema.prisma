@@ -50,8 +50,12 @@ model User {
   lastName    String?
   address     String?
   phone       String?
-  cuit        String?
-  razonSocial String?
+  cuit                     String?
+  razonSocial              String?
+  emailVerified            DateTime?
+  emailVerificationToken   String?
+  passwordResetToken       String?
+  passwordResetExpiresAt   DateTime?
   orders      Order[]
   activityLog ActivityLog[]
   createdAt   DateTime      @default(now())
@@ -77,12 +81,14 @@ model Order {
   userRole        String      @default("RETAIL") // pricing tier at time of order
   paymentMethod   String?     // "MERCADO_PAGO" | "WHATSAPP" | null
   transactionId   String?     // MP payment ID when confirmed
-  shippingAddress String?
-  trackingNumber  String?
-  shippedAt       DateTime?
-  deliveredAt     DateTime?
-  notes           String?
-  createdAt       DateTime    @default(now())
+  shippingAddress        String?
+  trackingNumber         String?
+  shippedAt              DateTime?
+  deliveredAt            DateTime?
+  notes                  String?
+  confirmationEmailSent  Boolean   @default(false)
+  statusUpdateEmailSent  Boolean   @default(false)
+  createdAt              DateTime  @default(now())
   updatedAt       DateTime    @updatedAt
 
   @@index([userId])

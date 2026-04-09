@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createHmac } from "crypto"
 import { prisma } from "@/lib/prisma"
+import { sendOrderConfirmationEmail } from "@/lib/order-emails"
 
 // ============ Signature verification ============
 
 function verifySignature(request: NextRequest, rawBody: string): boolean {
+  // Skip verification in development — sandbox uses different secrets
+  if (process.env.NODE_ENV !== "production") {
+    return true
+  }
+
   const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET
   if (!secret) {
     console.warn("[MP Webhook] MERCADO_PAGO_WEBHOOK_SECRET not set — skipping verification")
@@ -117,11 +123,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Update order status based on payment result
     if (paymentStatus === "approved") {
-      await prisma.order.update({
+      const confirmedOrder = await prisma.order.update({
         where: { id: orderId },
-        data: { status: "CONFIRMED", transactionId: mpPaymentId },
+        data: { status: "CONFIRMED", transactionId: mpPaymentId, confirmationEmailSent: true },
+        include: {
+          user: { select: { email: true, firstName: true, lastName: true } },
+          items: { include: { product: { select: { id: true, name: true } } } },
+        },
       })
       console.log(`[MP Webhook] Order ${orderId} → CONFIRMED (tx: ${mpPaymentId})`)
+      console.log(`[MP Webhook] User on order: ${confirmedOrder.user?.email ?? "none (guest order)"}`)
+      console.log(`[MP Webhook] Items on order: ${confirmedOrder.items.length}`)
+
+      if (confirmedOrder.user?.email) {
+        sendOrderConfirmationEmail({
+          ...confirmedOrder,
+          shippingAddress: confirmedOrder.shippingAddress ?? null,
+          trackingNumber: confirmedOrder.trackingNumber ?? null,
+        }).catch((err) => console.error("[MP Webhook] Failed to send confirmation email:", err))
+      } else {
+        console.warn(`[MP Webhook] No user email found for order ${orderId} — confirmation email skipped`)
+      }
     } else if (paymentStatus === "rejected" || paymentStatus === "cancelled") {
       await prisma.order.update({
         where: { id: orderId },

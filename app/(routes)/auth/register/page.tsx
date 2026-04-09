@@ -3,7 +3,6 @@
 import { useState, FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useAuth } from "@/lib/hooks/useAuth"
 
 type Role = "RETAIL" | "WHOLESALE"
 
@@ -11,7 +10,6 @@ const CUIT_REGEX = /^\d{11}$/
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { login } = useAuth()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -24,6 +22,7 @@ export default function RegisterPage() {
   const [razonSocial, setRazonSocial] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [registered, setRegistered] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -67,8 +66,7 @@ export default function RegisterPage() {
         return
       }
 
-      login(data.data.token)
-      router.push("/products")
+      setRegistered(true)
     } catch {
       setError("Error de conexión. Intentá de nuevo.")
     } finally {
@@ -87,6 +85,22 @@ export default function RegisterPage() {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+          {registered ? (
+            <div className="py-4 text-center space-y-4">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Revisá tu email</h2>
+              <p className="text-sm text-gray-500">
+                Te enviamos un link de verificación a <strong>{email}</strong>. Hacé clic ahí para activar tu cuenta.
+              </p>
+              <Link href="/auth/login" className="inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700">
+                Ir al login
+              </Link>
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name row */}
             <div className="grid grid-cols-2 gap-3">
@@ -260,13 +274,16 @@ export default function RegisterPage() {
               {loading ? "Creando cuenta…" : "Crear cuenta"}
             </button>
           </form>
+          )}
 
-          <p className="mt-6 text-center text-sm text-gray-600">
-            ¿Ya tenés cuenta?{" "}
-            <Link href="/auth/login" className="font-medium text-indigo-600 hover:text-indigo-700">
-              Ingresá
-            </Link>
-          </p>
+          {!registered && (
+            <p className="mt-6 text-center text-sm text-gray-600">
+              ¿Ya tenés cuenta?{" "}
+              <Link href="/auth/login" className="font-medium text-indigo-600 hover:text-indigo-700">
+                Ingresá
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </div>

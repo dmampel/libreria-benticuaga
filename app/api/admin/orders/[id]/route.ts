@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAdmin } from "@/lib/admin-auth"
+import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/order-emails"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -60,12 +61,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const { id } = await context.params
     const body = await request.json()
 
-    const existing = await prisma.order.findUnique({ where: { id }, select: { id: true, status: true } })
+    const existing = await prisma.order.findUnique({
+      where: { id },
+      select: { id: true, status: true, trackingNumber: true },
+    })
     if (!existing) {
       return NextResponse.json({ success: false, error: "Pedido no encontrado" }, { status: 404 })
     }
 
     const { status, shippingAddress, trackingNumber, shippedAt, deliveredAt, notes } = body
+
+    const statusChanging = status !== undefined && status !== existing.status
+    const newTrackingNumber = trackingNumber ?? existing.trackingNumber
 
     const updated = await prisma.order.update({
       where: { id },
@@ -76,8 +83,37 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         ...(shippedAt !== undefined && { shippedAt: shippedAt ? new Date(shippedAt) : null }),
         ...(deliveredAt !== undefined && { deliveredAt: deliveredAt ? new Date(deliveredAt) : null }),
         ...(notes !== undefined && { notes }),
+        ...(statusChanging && (status === "SHIPPED" || status === "DELIVERED") && { statusUpdateEmailSent: true }),
       },
     })
+
+    // Send status emails after update (fire-and-forget)
+    if (statusChanging && (status === "SHIPPED" || status === "DELIVERED")) {
+      const fullOrder = await prisma.order.findUnique({
+        where: { id },
+        include: {
+          user: { select: { email: true, firstName: true, lastName: true } },
+          items: { include: { product: { select: { id: true, name: true } } } },
+        },
+      })
+
+      if (fullOrder?.user?.email) {
+        const emailData = {
+          ...fullOrder,
+          shippingAddress: fullOrder.shippingAddress ?? null,
+          trackingNumber: fullOrder.trackingNumber ?? null,
+        }
+        if (status === "SHIPPED") {
+          sendOrderShippedEmail(emailData, newTrackingNumber ?? "").catch((err) =>
+            console.error("[Admin] Failed to send shipped email:", err)
+          )
+        } else {
+          sendOrderDeliveredEmail(emailData).catch((err) =>
+            console.error("[Admin] Failed to send delivered email:", err)
+          )
+        }
+      }
+    }
 
     // Log admin action
     const changes: string[] = []

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { hashPassword, generateToken } from "@/lib/auth"
+import { hashPassword, generateEmailVerificationToken, sendVerificationEmail } from "@/lib/auth"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const CUIT_REGEX = /^\d{11}$/
@@ -68,6 +68,8 @@ export async function POST(request: NextRequest) {
 
     const hashedPassword = await hashPassword(password)
 
+    const verificationToken = generateEmailVerificationToken()
+
     const user = await prisma.user.create({
       data: {
         email,
@@ -79,20 +81,19 @@ export async function POST(request: NextRequest) {
         address: address ?? null,
         cuit: resolvedRole === "WHOLESALE" ? cuit : null,
         razonSocial: resolvedRole === "WHOLESALE" ? razonSocial : null,
+        emailVerificationToken: verificationToken,
       },
     })
 
-    const token = generateToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      firstName: user.firstName ?? undefined,
-      lastName: user.lastName ?? undefined,
-    })
+    // Fire-and-forget — don't fail registration if email fails
+    sendVerificationEmail(user.email, verificationToken).catch((err) =>
+      console.error("[Auth] Failed to send verification email:", err)
+    )
 
     return NextResponse.json({
       success: true,
-      data: { id: user.id, email: user.email, role: user.role, token },
+      data: { id: user.id, email: user.email, role: user.role, requiresVerification: true },
+      message: "Revisá tu email para verificar tu cuenta antes de ingresar.",
     })
   } catch (error) {
     console.error("[Auth] Register error:", error)
