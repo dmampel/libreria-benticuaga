@@ -10,6 +10,7 @@ export interface TokenPayload {
   id: string
   email: string
   role: string
+  isAdmin?: boolean
   firstName?: string
   lastName?: string
 }

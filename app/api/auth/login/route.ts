@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
       id: user.id,
       email: user.email,
       role: user.role,
+      isAdmin: user.isAdmin,
       firstName: user.firstName ?? undefined,
       lastName: user.lastName ?? undefined,
     })

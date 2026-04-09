@@ -2,27 +2,67 @@ import { NextRequest, NextResponse } from "next/server"
 
 const TOKEN_KEY = "auth_token"
 
-function isValidToken(token: string): boolean {
+interface DecodedToken {
+  id?: string
+  email?: string
+  isAdmin?: boolean
+  exp?: number
+}
+
+function decodeToken(token: string): DecodedToken | null {
   try {
     const base64 = token.split(".")[1]
-    if (!base64) return false
-    // base64url → base64
+    if (!base64) return null
     const padded = base64.replace(/-/g, "+").replace(/_/g, "/")
-    const decoded = JSON.parse(Buffer.from(padded, "base64").toString("utf8"))
-    if (!decoded.id || !decoded.email) return false
-    if (decoded.exp && decoded.exp * 1000 < Date.now()) return false
-    return true
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf8")) as DecodedToken
   } catch {
-    return false
+    return null
   }
 }
 
+function isTokenValid(decoded: DecodedToken): boolean {
+  if (!decoded.id || !decoded.email) return false
+  if (decoded.exp && decoded.exp * 1000 < Date.now()) return false
+  return true
+}
+
 export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
   const token = request.cookies.get(TOKEN_KEY)?.value
 
-  if (!token || !isValidToken(token)) {
+  // ============ ADMIN ROUTES ============
+  if (pathname.startsWith("/admin")) {
+    if (!token) {
+      const loginUrl = new URL("/auth/login", request.url)
+      loginUrl.searchParams.set("from", pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    const decoded = decodeToken(token)
+    if (!decoded || !isTokenValid(decoded)) {
+      const loginUrl = new URL("/auth/login", request.url)
+      loginUrl.searchParams.set("from", pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    if (!decoded.isAdmin) {
+      return NextResponse.redirect(new URL("/products", request.url))
+    }
+
+    return NextResponse.next()
+  }
+
+  // ============ ACCOUNT ROUTES ============
+  if (!token) {
     const loginUrl = new URL("/auth/login", request.url)
-    loginUrl.searchParams.set("from", request.nextUrl.pathname)
+    loginUrl.searchParams.set("from", pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  const decoded = decodeToken(token)
+  if (!decoded || !isTokenValid(decoded)) {
+    const loginUrl = new URL("/auth/login", request.url)
+    loginUrl.searchParams.set("from", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
@@ -30,5 +70,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/account/:path*"],
+  matcher: ["/account/:path*", "/admin/:path*"],
 }

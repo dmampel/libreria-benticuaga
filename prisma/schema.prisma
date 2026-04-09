@@ -40,21 +40,25 @@ model Product {
 
 // ============ USERS ============
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String // bcrypt hash
-  role      Role     @default(RETAIL)
+  id          String        @id @default(uuid())
+  email       String        @unique
+  password    String // bcrypt hash
+  role        Role          @default(RETAIL)
+  isAdmin     Boolean       @default(false)
+  isActive    Boolean       @default(true)
   firstName   String?
   lastName    String?
   address     String?
   phone       String?
   cuit        String?
   razonSocial String?
-  orders    Order[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  orders      Order[]
+  activityLog ActivityLog[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([email])
+  @@index([isAdmin])
 }
 
 enum Role {
@@ -64,25 +68,46 @@ enum Role {
 
 // ============ ORDERS ============
 model Order {
-  id        String      @id @default(uuid())
-  userId    String? // nullable for guest orders (Phase 1 MVP — no auth)
-  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  items     OrderItem[]
-  total     Float
-  status        OrderStatus @default(PENDING)
-  userRole      String      @default("RETAIL") // pricing tier at time of order
-  paymentMethod String?     // "MERCADO_PAGO" | "WHATSAPP" | null
-  transactionId String?     // MP payment ID when confirmed
-  createdAt     DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id              String      @id @default(uuid())
+  userId          String? // nullable for guest orders (Phase 1 MVP — no auth)
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+  total           Float
+  status          OrderStatus @default(PENDING)
+  userRole        String      @default("RETAIL") // pricing tier at time of order
+  paymentMethod   String?     // "MERCADO_PAGO" | "WHATSAPP" | null
+  transactionId   String?     // MP payment ID when confirmed
+  shippingAddress String?
+  trackingNumber  String?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   @@index([userId])
 }
 
+// ============ ACTIVITY LOG ============
+model ActivityLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action    String
+  entityId  String?
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([createdAt])
+}
+
 enum OrderStatus {
-  PENDING // Waiting for WhatsApp confirmation
-  CONFIRMED // Confirmed by customer
-  CANCELLED // Cancelled
+  PENDING   // Initial state — awaiting review
+  CONFIRMED // Order accepted (payment verified or WhatsApp agreement)
+  SHIPPED   // Order dispatched
+  DELIVERED // Order received by customer
+  CANCELLED // Order invalid or cancelled
 }
 
 // ============ ORDER ITEMS ============
