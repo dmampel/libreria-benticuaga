@@ -92,7 +92,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       const fullOrder = await prisma.order.findUnique({
         where: { id },
         include: {
-          user: { select: { email: true, firstName: true, lastName: true } },
+          user: { select: { id: true, email: true, firstName: true, lastName: true } },
           items: { include: { product: { select: { id: true, name: true } } } },
         },
       })

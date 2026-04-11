@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useCart } from "@/lib/hooks/useCart"
 import { getPrice, getPriceLabel } from "@/lib/pricing"
+import { useToast } from "@/context/ToastContext"
 
 interface Product {
   id: string
@@ -14,8 +15,15 @@ interface Product {
   image: string
 }
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ 
+  product, 
+  priority = false 
+}: { 
+  product: Product, 
+  priority?: boolean 
+}) {
   const { addItem, userRole } = useCart()
+  const { showToast } = useToast()
   const hasImage = product.image.startsWith("http")
   const displayPrice = getPrice(product, userRole)
 
@@ -28,6 +36,7 @@ export default function ProductCard({ product }: { product: Product }) {
       stock: product.stock,
       image: product.image,
     })
+    showToast("Agregado al carrito", "success")
   }
 
   return (
@@ -40,6 +49,7 @@ export default function ProductCard({ product }: { product: Product }) {
             alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            priority={priority}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { parseCsv } from "@/lib/csv-parser"
 import { prisma } from "@/lib/prisma"
+import { normalizeText } from "@/lib/utils/normalize"
 
 // ============ Types ============
+// ... (rest of imports and types)
 
 interface UploadSummary {
   created: number
@@ -38,6 +40,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     for (const product of products) {
       const existing = await prisma.product.findUnique({ where: { id: product.id } })
 
+      const searchName = normalizeText(product.name)
+
       await prisma.product.upsert({
         where: { id: product.id },
         update: {
@@ -46,6 +50,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           wholesalePrice: product.wholesalePrice,
           stock: product.stock,
           image: product.image,
+          searchName,
         },
         create: {
           id: product.id,
@@ -54,6 +59,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           wholesalePrice: product.wholesalePrice,
           stock: product.stock,
           image: product.image,
+          searchName,
         },
       })
 

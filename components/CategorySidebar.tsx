@@ -11,7 +11,11 @@ interface Category {
   icon: string | null
 }
 
-export default function CategorySidebar() {
+interface Props {
+  basePath?: string
+}
+
+export default function CategorySidebar({ basePath = "/products" }: Props) {
   const searchParams = useSearchParams()
   const currentSlug = searchParams.get("category")
   const [categories, setCategories] = useState<Category[]>([])
@@ -33,7 +37,7 @@ export default function CategorySidebar() {
         <ul className="space-y-0.5">
           <li>
             <Link
-              href="/products"
+              href={basePath}
               className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
                 !currentSlug
                   ? "bg-blue-500 text-white"
@@ -47,7 +51,7 @@ export default function CategorySidebar() {
           {categories.map((cat) => (
             <li key={cat.id}>
               <Link
-                href={`/products?category=${cat.slug}`}
+                href={`${basePath}?category=${cat.slug}`}
                 className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
                   currentSlug === cat.slug
                     ? "bg-blue-500 text-white"

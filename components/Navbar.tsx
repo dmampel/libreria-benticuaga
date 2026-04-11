@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import CartSummary from "@/components/CartSummary"
 import { useCart } from "@/lib/hooks/useCart"
 import { useAuth } from "@/lib/hooks/useAuth"
+import Image from "next/image"
 
 function getInitials(firstName?: string, lastName?: string, email?: string): string {
   if (firstName && lastName) return (firstName[0] + lastName[0]).toUpperCase()
@@ -51,10 +52,17 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Brand */}
         <Link
-          href="/products"
+          href="/"
           className="text-xl font-bold tracking-tight text-gray-900 hover:text-gray-700"
         >
-          Benticuaga
+          <Image
+            src="/logo.svg"
+            alt="Benticuaga Logo"
+            width={120}
+            height={40}
+            className="h-10 w-auto"
+            priority
+          />
         </Link>
 
         {/* Right side */}

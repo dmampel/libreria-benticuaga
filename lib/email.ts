@@ -24,9 +24,25 @@ export async function sendPasswordResetEmail(email: string, resetLink: string): 
   await sendEmail(email, "Restablecer contraseña — Benticuaga", html)
 }
 
-export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+export interface EmailAttachment {
+  filename: string
+  content: Buffer
+}
+
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+  attachments?: EmailAttachment[]
+): Promise<boolean> {
   try {
-    const { error } = await resend.emails.send({ from: FROM, to, subject, html })
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject,
+      html,
+      ...(attachments && attachments.length > 0 ? { attachments } : {}),
+    })
     if (error) {
       console.error("[Email] Send error:", error)
       return false

@@ -13,7 +13,7 @@ export interface OrderEmailData {
   shippingAddress: string | null
   trackingNumber: string | null
   items: OrderItemData[]
-  user: { email: string; firstName: string | null; lastName: string | null } | null
+  user: { id?: string; email: string; firstName: string | null; lastName: string | null } | null
 }
 
 // ============ Shared helpers ============

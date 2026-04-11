@@ -2,25 +2,40 @@ import { Suspense } from "react"
 import { prisma } from "@/lib/prisma"
 import ProductCard from "@/components/ProductCard"
 import CategorySidebar from "@/components/CategorySidebar"
+import { normalizeText } from "@/lib/utils/normalize"
 
 export const dynamic = "force-dynamic"
 
 interface Props {
-  searchParams: Promise<{ category?: string }>
+  searchParams: Promise<{ category?: string; brand?: string; q?: string }>
 }
 
 export default async function ProductsPage({ searchParams }: Props) {
-  const { category } = await searchParams
+  const { category, brand, q: qRaw } = await searchParams
+  const q = normalizeText(qRaw)
 
   const products = await prisma.product.findMany({
-    where: category ? { category: { slug: category } } : undefined,
+    where: {
+      ...(category ? { category: { slug: category } } : {}),
+      ...(brand ? { brandId: brand } : {}),
+      ...(q
+        ? {
+            OR: [
+              { searchName: { contains: q, mode: "insensitive" } },
+              { searchDescription: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { name: "asc" },
-    include: { category: true },
+    include: { category: true, brand: true },
   })
 
-  const title = category
-    ? (products[0]?.category?.name ?? "Categoría")
-    : "Productos"
+  const title = brand
+    ? (products[0]?.brand?.name ?? "Marca")
+    : category
+      ? (products[0]?.category?.name ?? "Categoría")
+      : "Productos"
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -68,9 +83,9 @@ export default async function ProductsPage({ searchParams }: Props) {
           {/* Product grid */}
           {products.length > 0 && (
             <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {products.map((product) => (
+              {products.map((product, index) => (
                 <li key={product.id}>
-                  <ProductCard product={product} />
+                  <ProductCard product={product} priority={index < 4} />
                 </li>
               ))}
             </ul>

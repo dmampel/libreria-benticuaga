@@ -5,9 +5,16 @@ import Link from "next/link"
 import { useCart } from "@/lib/hooks/useCart"
 import QuantitySelector from "@/components/QuantitySelector"
 import { getPrice, getPriceLabel } from "@/lib/pricing"
+import { useToast } from "@/context/ToastContext"
 
 export default function CartPage() {
   const { items, userRole, removeItem, updateQuantity, clearCart, getTotal, getItemCount } = useCart()
+  const { showToast } = useToast()
+
+  function handleRemove(productId: string, name: string) {
+    removeItem(productId)
+    showToast(`${name} eliminado del carrito`, "info")
+  }
 
   const total = getTotal()
   const itemCount = getItemCount()
@@ -103,7 +110,7 @@ export default function CartPage() {
                       <p className="text-xs text-gray-400">#{item.productId}</p>
                     </div>
                     <button
-                      onClick={() => removeItem(item.productId)}
+                      onClick={() => handleRemove(item.productId, item.name)}
                       aria-label={`Eliminar ${item.name}`}
                       className="flex-shrink-0 text-gray-300 transition-colors hover:text-red-500"
                     >

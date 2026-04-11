@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -13,6 +13,7 @@
     "bcrypt": "^6.0.0",
     "csv-parse": "^6.2.1",
     "jsonwebtoken": "^9.0.3",
+    "jspdf": "^4.2.1",
     "mercadopago": "^2.12.0",
     "next": "16.2.2",
     "react": "19.2.4",
@@ -32,5 +33,8 @@
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   }
 }

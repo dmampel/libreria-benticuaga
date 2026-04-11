@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createHmac } from "crypto"
 import { prisma } from "@/lib/prisma"
-import { sendOrderConfirmationEmail } from "@/lib/order-emails"
+import { sendOrderConfirmationEmailWithInvoice } from "@/lib/order-emails"
 
 // ============ Signature verification ============
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         where: { id: orderId },
         data: { status: "CONFIRMED", transactionId: mpPaymentId, confirmationEmailSent: true },
         include: {
-          user: { select: { email: true, firstName: true, lastName: true } },
+          user: { select: { id: true, email: true, firstName: true, lastName: true } },
           items: { include: { product: { select: { id: true, name: true } } } },
         },
       })
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.log(`[MP Webhook] Items on order: ${confirmedOrder.items.length}`)
 
       if (confirmedOrder.user?.email) {
-        sendOrderConfirmationEmail({
+        sendOrderConfirmationEmailWithInvoice({
           ...confirmedOrder,
           shippingAddress: confirmedOrder.shippingAddress ?? null,
           trackingNumber: confirmedOrder.trackingNumber ?? null,

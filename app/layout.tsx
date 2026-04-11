@@ -3,8 +3,11 @@ import { Geist } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
 import Navbar from "@/components/Navbar"
+import Footer from "@/components/Footer"
+import ToastContainer from "@/components/ToastContainer"
 import { CartProvider } from "@/context/CartContext"
 import { AuthProvider } from "@/lib/hooks/useAuth"
+import { ToastProvider } from "@/context/ToastContext"
 import ClearCartOnSuccess from "@/components/ClearCartOnSuccess"
 
 const geistSans = Geist({
@@ -24,16 +27,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning className={`${geistSans.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-gray-50">
-        <AuthProvider>
-          <CartProvider>
-            <Suspense fallback={null}>
-              <ClearCartOnSuccess />
-            </Suspense>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-          </CartProvider>
-        </AuthProvider>
+      <body className="flex min-h-full flex-col bg-gray-50" suppressHydrationWarning>
+        <ToastProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Suspense fallback={null}>
+                <ClearCartOnSuccess />
+              </Suspense>
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </CartProvider>
+          </AuthProvider>
+          <ToastContainer />
+        </ToastProvider>
       </body>
     </html>
   )

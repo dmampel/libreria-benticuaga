@@ -16,8 +16,23 @@ model Category {
   products  Product[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  searchName String    @default("")
 
   @@index([slug])
+  @@index([searchName])
+}
+
+// ============ BRANDS ============
+model Brand {
+  id        String    @id @default(uuid())
+  name      String
+  image     String?
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  searchName String    @default("")
+
+  @@index([searchName])
 }
 
 // ============ PRODUCTS ============
@@ -31,11 +46,18 @@ model Product {
   image          String // img_url from CSV
   categoryId     String?
   category       Category?  @relation(fields: [categoryId], references: [id])
+  brandId        String?
+  brand          Brand?     @relation(fields: [brandId], references: [id])
   orderItems     OrderItem[]
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
+  searchName        String  @default("")
+  searchDescription String?
+
   @@index([categoryId])
+  @@index([brandId])
+  @@index([searchName])
 }
 
 // ============ USERS ============
@@ -56,10 +78,12 @@ model User {
   emailVerificationToken   String?
   passwordResetToken       String?
   passwordResetExpiresAt   DateTime?
-  orders      Order[]
-  activityLog ActivityLog[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  orders           Order[]
+  activityLog      ActivityLog[]
+  emailPreferences EmailPreferences?
+  sentEmails       SentEmail[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   @@index([email])
   @@index([isAdmin])
@@ -114,6 +138,38 @@ enum OrderStatus {
   SHIPPED   // Order dispatched
   DELIVERED // Order received by customer
   CANCELLED // Order invalid or cancelled
+}
+
+// ============ EMAIL PREFERENCES ============
+model EmailPreferences {
+  id                String  @id @default(uuid())
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderConfirmation Boolean @default(true)
+  orderUpdates      Boolean @default(true)
+  promotions        Boolean @default(false)
+  newsletter        Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ============ SENT EMAILS ============
+model SentEmail {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  to        String
+  subject   String
+  type      String   // "ORDER_CONFIRMATION" | "ORDER_SHIPPED" | "ORDER_DELIVERED" | "VERIFICATION" | "PASSWORD_RESET"
+  orderId   String?
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([orderId])
+  @@index([createdAt])
 }
 
 // ============ ORDER ITEMS ============

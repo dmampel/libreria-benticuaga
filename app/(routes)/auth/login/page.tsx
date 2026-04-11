@@ -4,11 +4,13 @@ import { useState, FormEvent, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/lib/hooks/useAuth"
+import { useToast } from "@/context/ToastContext"
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { login } = useAuth()
+  const { showToast } = useToast()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -39,7 +41,9 @@ function LoginForm() {
         if (data.code === "EMAIL_NOT_VERIFIED") {
           setUnverifiedEmail(email)
         } else {
-          setError(data.error ?? "Error al ingresar")
+          const msg = data.error ?? "Error al ingresar"
+          setError(msg)
+          showToast(msg, "error")
         }
         return
       }
