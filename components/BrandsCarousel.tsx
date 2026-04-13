@@ -47,7 +47,7 @@ export default function BrandsCarousel({ brands }: Props) {
                 >
                   {/* Circular logo */}
                   {brand.image ? (
-                    <div className="relative h-16 w-16 overflow-hidden rounded-full border border-gray-100 shadow-md ring-1 ring-gray-200/60 transition-all duration-300 group-hover:scale-120 group-hover:shadow-xl">
+                    <div className="relative h-24 w-24 overflow-hidden rounded-full border border-gray-100 shadow-md ring-1 ring-gray-200/60 transition-all duration-300 group-hover:scale-120 group-hover:shadow-xl">
                       <Image
                         src={brand.image}
                         alt={brand.name}
@@ -66,7 +66,7 @@ export default function BrandsCarousel({ brands }: Props) {
 
                   {/* Tooltip — aparece en hover */}
                   <span
-                    className={`pointer-events-none absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white opacity-0 shadow transition-all duration-200 group-hover:-bottom-8 group-hover:opacity-100 ${labelColor}`}
+                    className={`pointer-events-none absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold text-white opacity-0 shadow transition-all duration-200 group-hover:-bottom-8 group-hover:opacity-100 ${labelColor}`}
                   >
                     {brand.name}
                   </span>

@@ -68,10 +68,16 @@ export default function Navbar() {
         {/* Right side */}
         <div className="flex items-center gap-2">
           <Link
+            href="/"
+            className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          >
+            Inicio
+          </Link>
+          <Link
             href="/products"
             className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
           >
-            Productos
+            Tienda
           </Link>
 
           {/* Auth section */}
@@ -170,15 +176,15 @@ export default function Navbar() {
             <>
               <Link
                 href="/auth/login"
-                className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                className="rounded-lg bg-blue-400 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
               >
-                Ingresar
+                Iniciar Sesión
               </Link>
               <Link
                 href="/auth/register"
-                className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+                className="rounded-lg bg-violet-400 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-violet-600"
               >
-                Registrarse
+                Crear Cuenta
               </Link>
             </>
           )}

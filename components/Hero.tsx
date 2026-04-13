@@ -1,7 +1,7 @@
-import Image from "next/image"
-import AnimatedBlobs from "@/components/AnimatedBlobs"
-import TrustBadges from "@/components/TrustBadges"
-import logo from "@/public/benticuaga-hero.svg"
+import Image from "next/image";
+import AnimatedBlobs from "@/components/AnimatedBlobs";
+import TrustBadges from "@/components/TrustBadges";
+import logo from "@/public/benticuaga-hero.svg";
 
 /**
  * Hero — premium landing banner with animated blobs, wordmark, and trust badges.
@@ -26,12 +26,12 @@ export default function Hero() {
 
         {/* Tagline */}
         <p className="mx-auto mb-10 max-w-xl text-base text-slate-500 sm:text-lg">
-          Explorá nuestra selección de papelería premium. Mayoristas y minoristas bienvenidos.
+          Encontrá lo que buscás de las mejores marcas al mejor precio. A un solo click de distancia! Comprar nunca fue tan fácil.
         </p>
 
         {/* Trust badges */}
         <TrustBadges />
       </div>
     </section>
-  )
+  );
 }

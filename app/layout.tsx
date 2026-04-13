@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import { Geist } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
-import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
 import ToastContainer from "@/components/ToastContainer"
 import { CartProvider } from "@/context/CartContext"
@@ -34,7 +33,6 @@ export default function RootLayout({
               <Suspense fallback={null}>
                 <ClearCartOnSuccess />
               </Suspense>
-              <Navbar />
               <main className="flex-1">{children}</main>
               <Footer />
             </CartProvider>

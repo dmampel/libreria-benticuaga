@@ -1,117 +1,75 @@
-import { Suspense } from "react"
-import { prisma } from "@/lib/prisma"
-import Hero from "@/components/Hero"
-import BrandsCarousel from "@/components/BrandsCarousel"
-import CategorySidebar from "@/components/CategorySidebar"
-import ProductCard from "@/components/ProductCard"
-import { getAllBrands } from "@/lib/brands"
-import { normalizeText } from "@/lib/utils/normalize"
+import Image from "next/image";
+import Link from "next/link";
+import headerImg from "@/public/header.png";
+import logo from "@/public/benticuaga-hero.svg";
+import BrandsCarousel from "@/components/BrandsCarousel";
+import CategoryGrid from "@/components/CategoryGrid";
+import { getAllBrands } from "@/lib/brands";
+import TrustSection from "@/components/TrustSection";
 
-import SearchBar from "@/components/SearchBar"
+export const dynamic = "force-dynamic";
 
-export const dynamic = "force-dynamic"
-
-interface Props {
-  searchParams: Promise<{ category?: string; brand?: string; q?: string }>
-}
-
-export default async function HomePage({ searchParams }: Props) {
-  const { category, brand, q: qRaw } = await searchParams
-  const q = normalizeText(qRaw)
-
-  const [products, brands] = await Promise.all([
-    prisma.product.findMany({
-      where: {
-        ...(category ? { category: { slug: category } } : {}),
-        ...(brand ? { brandId: brand } : {}),
-        ...(q
-          ? {
-              OR: [
-                { searchName: { contains: q, mode: "insensitive" } },
-                { searchDescription: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: { name: "asc" },
-      include: { category: true, brand: true },
-    }),
-    getAllBrands(),
-  ])
-
-  const title = brand
-    ? (products[0]?.brand?.name ?? "Marca")
-    : category
-      ? (products[0]?.category?.name ?? "Categoría")
-      : "Productos"
+export default async function HomePage() {
+  const brands = await getAllBrands();
 
   return (
     <>
-      {/* Full-width Hero */}
-      <Hero />
+      {/* ─── Hero Section ─────────────────────────────────────────── */}
+      <section className="bg-white">
+        {/* Background image — shown in full, natural proportions */}
+        <Image
+          src={headerImg}
+          alt=""
+          priority
+          sizes="100vw"
+          className="h-auto w-full"
+        />
 
-      {/* Brands carousel (only if brands exist) */}
-      <BrandsCarousel brands={brands} />
+        {/* Center content: logo + buttons */}
+        <div className="flex flex-col items-center gap-10 px-4 pb-12 pt-8 sm:pb-14 sm:pt-10">
+          <p className="text-2xl text-center font-light text-gray-600">
+            ¡Bienvenido a nuestra nueva tienda online!
+            <br />
+            Te invitamos a explorar nuestro catálogo de productos premium.
+          </p>
 
-      {/* 2-col layout: sidebar + products */}
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-start">
-          {/* Category sidebar — hidden on mobile, visible sm+ */}
-          <div className="hidden sm:block sm:w-64 sm:shrink-0">
-            <Suspense fallback={<div className="h-64 w-64 animate-pulse rounded-2xl bg-gray-100" />}>
-              <CategorySidebar basePath="/" />
-            </Suspense>
-          </div>
+          {/* CTA buttons + link */}
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/auth/register"
+              id="home-register-btn"
+              className="rounded-xl bg-violet-400 px-7 py-2.5 text-md font-semibold text-white shadow-md transition-all duration-200 hover:bg-violet-600 hover:shadow-lg active:scale-95"
+            >
+              Crear una cuenta
+            </Link>
+            <Link
+              href="/auth/login"
+              id="home-login-btn"
+              className="rounded-xl bg-blue-400 px-7 py-2.5 text-md font-semibold text-white shadow-md transition-all duration-200 hover:bg-blue-600 hover:shadow-lg active:scale-95"
+            >
+              Iniciar sesión
+            </Link>
 
-          {/* Products area */}
-          <div className="min-w-0 flex-1">
-            {/* Search Bar */}
-            <SearchBar />
-
-            {/* Section header */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900">{title}</h2>
-              <p className="mt-1 text-sm text-gray-500">
-                {products.length}{" "}
-                {products.length === 1 ? "producto disponible" : "productos disponibles"}
-              </p>
-            </div>
-
-            {/* Empty state */}
-            {products.length === 0 && (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 py-24 text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
-                  />
-                </svg>
-                <p className="mt-4 text-sm font-medium text-gray-500">
-                  No hay productos en esta categoría.
-                </p>
-              </div>
-            )}
-
-            {/* Product grid — 2 cols mobile, 4 cols desktop */}
-            {products.length > 0 && (
-              <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                {products.map((product, index) => (
-                  <li key={product.id}>
-                    <ProductCard product={product} priority={index < 4} />
-                  </li>
-                ))}
-              </ul>
-            )}
+            <Link
+              href="/products"
+              id="home-products-link"
+              className="text-2xl text-gray-700 transition-colors hover:text-blue-600 sm:ml-4 "
+            >
+              Ir a la tienda →
+            </Link>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* ─── Brands banner ────────────────────────────────────────── */}
+      <BrandsCarousel brands={brands} />
+
+      {/* ─── Category grid ────────────────────────────────────────── */}
+      <CategoryGrid />
+
+      {/* ─── Trust / Features section ─────────────────────────────── */}
+      <TrustSection />
+
     </>
-  )
+  );
 }
