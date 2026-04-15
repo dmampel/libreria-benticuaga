@@ -1,6 +1,7 @@
 import { sendEmail } from "@/lib/email"
 import {
   getOrderConfirmationHTML,
+  getOrderPreparingHTML,
   getOrderShippedHTML,
   getOrderDeliveredHTML,
   type OrderEmailData,
@@ -16,16 +17,19 @@ async function getUserPreferences(userId: string | undefined | null) {
 }
 
 export async function sendOrderConfirmationEmail(order: OrderEmailData): Promise<void> {
-  const to = order.user?.email
+  const to = order.user?.email ?? order.guestEmail ?? null
   if (!to) {
-    console.warn(`[OrderEmail] No user email on order ${order.id} — skipping confirmation`)
+    console.warn(`[OrderEmail] No email on order ${order.id} — skipping confirmation`)
     return
   }
 
-  const prefs = await getUserPreferences(order.user?.id)
-  if (prefs && !prefs.orderConfirmation) {
-    console.log(`[OrderEmail] User disabled orderConfirmation — skipping`)
-    return
+  // Registered users may have email preferences; guests always receive confirmations
+  if (order.user?.id) {
+    const prefs = await getUserPreferences(order.user.id)
+    if (prefs && !prefs.orderConfirmation) {
+      console.log(`[OrderEmail] User disabled orderConfirmation — skipping`)
+      return
+    }
   }
 
   const html = getOrderConfirmationHTML(order)
@@ -33,16 +37,19 @@ export async function sendOrderConfirmationEmail(order: OrderEmailData): Promise
 }
 
 export async function sendOrderConfirmationEmailWithInvoice(order: OrderEmailData): Promise<void> {
-  const to = order.user?.email
+  const to = order.user?.email ?? order.guestEmail ?? null
   if (!to) {
-    console.warn(`[OrderEmail] No user email on order ${order.id} — skipping confirmation+invoice`)
+    console.warn(`[OrderEmail] No email on order ${order.id} — skipping confirmation+invoice`)
     return
   }
 
-  const prefs = await getUserPreferences(order.user?.id)
-  if (prefs && !prefs.orderConfirmation) {
-    console.log(`[OrderEmail] User disabled orderConfirmation — skipping`)
-    return
+  // Registered users may have email preferences; guests always receive confirmations
+  if (order.user?.id) {
+    const prefs = await getUserPreferences(order.user.id)
+    if (prefs && !prefs.orderConfirmation) {
+      console.log(`[OrderEmail] User disabled orderConfirmation — skipping`)
+      return
+    }
   }
 
   const html = getOrderConfirmationHTML(order)
@@ -64,14 +71,32 @@ export async function sendOrderConfirmationEmailWithInvoice(order: OrderEmailDat
   )
 }
 
-export async function sendOrderShippedEmail(order: OrderEmailData, trackingNumber: string): Promise<void> {
-  const to = order.user?.email
+export async function sendOrderPreparingEmail(order: OrderEmailData): Promise<void> {
+  const to = order.user?.email ?? order.guestEmail ?? null
   if (!to) return
 
-  const prefs = await getUserPreferences(order.user?.id)
-  if (prefs && !prefs.orderUpdates) {
-    console.log(`[OrderEmail] User disabled orderUpdates — skipping shipped email`)
-    return
+  if (order.user?.id) {
+    const prefs = await getUserPreferences(order.user.id)
+    if (prefs && !prefs.orderUpdates) {
+      console.log(`[OrderEmail] User disabled orderUpdates — skipping preparing email`)
+      return
+    }
+  }
+
+  const html = getOrderPreparingHTML(order)
+  await sendEmail(to, `Tu pedido está siendo preparado #${order.id.slice(0, 8).toUpperCase()} — Benticuaga`, html)
+}
+
+export async function sendOrderShippedEmail(order: OrderEmailData, trackingNumber: string): Promise<void> {
+  const to = order.user?.email ?? order.guestEmail ?? null
+  if (!to) return
+
+  if (order.user?.id) {
+    const prefs = await getUserPreferences(order.user.id)
+    if (prefs && !prefs.orderUpdates) {
+      console.log(`[OrderEmail] User disabled orderUpdates — skipping shipped email`)
+      return
+    }
   }
 
   const html = getOrderShippedHTML(order, trackingNumber)
@@ -79,13 +104,15 @@ export async function sendOrderShippedEmail(order: OrderEmailData, trackingNumbe
 }
 
 export async function sendOrderDeliveredEmail(order: OrderEmailData): Promise<void> {
-  const to = order.user?.email
+  const to = order.user?.email ?? order.guestEmail ?? null
   if (!to) return
 
-  const prefs = await getUserPreferences(order.user?.id)
-  if (prefs && !prefs.orderUpdates) {
-    console.log(`[OrderEmail] User disabled orderUpdates — skipping delivered email`)
-    return
+  if (order.user?.id) {
+    const prefs = await getUserPreferences(order.user.id)
+    if (prefs && !prefs.orderUpdates) {
+      console.log(`[OrderEmail] User disabled orderUpdates — skipping delivered email`)
+      return
+    }
   }
 
   const html = getOrderDeliveredHTML(order)

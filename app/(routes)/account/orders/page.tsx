@@ -22,7 +22,10 @@ interface Order {
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   PENDING: { label: "Pendiente", className: "bg-yellow-100 text-yellow-700" },
-  CONFIRMED: { label: "Confirmado", className: "bg-green-100 text-green-700" },
+  CONFIRMED: { label: "Pago confirmado", className: "bg-blue-100 text-blue-700" },
+  PREPARING: { label: "En preparación", className: "bg-orange-100 text-orange-700" },
+  SHIPPED: { label: "Enviado", className: "bg-indigo-100 text-indigo-700" },
+  DELIVERED: { label: "Entregado", className: "bg-green-100 text-green-700" },
   CANCELLED: { label: "Cancelado", className: "bg-gray-100 text-gray-500" },
 }
 

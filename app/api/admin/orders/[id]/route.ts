@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAdmin } from "@/lib/admin-auth"
-import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/order-emails"
+import { sendOrderPreparingEmail, sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/order-emails"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ success: false, error: "Pedido no encontrado" }, { status: 404 })
     }
 
-    const { status, shippingAddress, trackingNumber, shippedAt, deliveredAt, notes } = body
+    const { status, shippingAddress, trackingNumber, notes } = body
 
     const statusChanging = status !== undefined && status !== existing.status
     const newTrackingNumber = trackingNumber ?? existing.trackingNumber
@@ -80,15 +80,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         ...(status !== undefined && { status }),
         ...(shippingAddress !== undefined && { shippingAddress }),
         ...(trackingNumber !== undefined && { trackingNumber }),
-        ...(shippedAt !== undefined && { shippedAt: shippedAt ? new Date(shippedAt) : null }),
-        ...(deliveredAt !== undefined && { deliveredAt: deliveredAt ? new Date(deliveredAt) : null }),
         ...(notes !== undefined && { notes }),
-        ...(statusChanging && (status === "SHIPPED" || status === "DELIVERED") && { statusUpdateEmailSent: true }),
+        ...(statusChanging && status === "SHIPPED" && { shippedAt: new Date() }),
+        ...(statusChanging && status === "DELIVERED" && { deliveredAt: new Date() }),
+        ...(statusChanging && (status === "PREPARING" || status === "SHIPPED" || status === "DELIVERED") && { statusUpdateEmailSent: true }),
       },
     })
 
     // Send status emails after update (fire-and-forget)
-    if (statusChanging && (status === "SHIPPED" || status === "DELIVERED")) {
+    if (statusChanging && (status === "PREPARING" || status === "SHIPPED" || status === "DELIVERED")) {
       const fullOrder = await prisma.order.findUnique({
         where: { id },
         include: {
@@ -97,13 +97,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         },
       })
 
-      if (fullOrder?.user?.email) {
+      const recipientEmail = fullOrder?.user?.email ?? fullOrder?.guestEmail ?? null
+      if (fullOrder && recipientEmail) {
         const emailData = {
           ...fullOrder,
           shippingAddress: fullOrder.shippingAddress ?? null,
           trackingNumber: fullOrder.trackingNumber ?? null,
+          guestEmail: fullOrder.guestEmail ?? null,
+          guestName: fullOrder.guestName ?? null,
         }
-        if (status === "SHIPPED") {
+        if (status === "PREPARING") {
+          sendOrderPreparingEmail(emailData).catch((err) =>
+            console.error("[Admin] Failed to send preparing email:", err)
+          )
+        } else if (status === "SHIPPED") {
           sendOrderShippedEmail(emailData, newTrackingNumber ?? "").catch((err) =>
             console.error("[Admin] Failed to send shipped email:", err)
           )
@@ -120,8 +127,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (status !== undefined && status !== existing.status) changes.push(`status: ${existing.status} → ${status}`)
     if (shippingAddress !== undefined) changes.push("shippingAddress updated")
     if (trackingNumber !== undefined) changes.push("trackingNumber updated")
-    if (shippedAt !== undefined) changes.push("shippedAt updated")
-    if (deliveredAt !== undefined) changes.push("deliveredAt updated")
+    if (statusChanging && status === "SHIPPED") changes.push("shippedAt set automatically")
+    if (statusChanging && status === "DELIVERED") changes.push("deliveredAt set automatically")
     if (notes !== undefined) changes.push("notes updated")
 
     await prisma.activityLog.create({

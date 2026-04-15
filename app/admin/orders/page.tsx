@@ -7,7 +7,8 @@ import { OrderTable, type OrderRow } from "@/components/admin/OrderTable"
 const STATUS_OPTIONS = [
   { value: "", label: "Todos los estados" },
   { value: "PENDING", label: "Pendiente" },
-  { value: "CONFIRMED", label: "Confirmado" },
+  { value: "CONFIRMED", label: "Pago confirmado" },
+  { value: "PREPARING", label: "En preparación" },
   { value: "SHIPPED", label: "Enviado" },
   { value: "DELIVERED", label: "Entregado" },
   { value: "CANCELLED", label: "Cancelado" },

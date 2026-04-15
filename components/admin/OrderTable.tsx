@@ -9,14 +9,17 @@ export interface OrderRow {
   status: string
   createdAt: string
   user: { email: string; firstName: string | null; lastName: string | null } | null
+  guestEmail: string | null
+  guestName: string | null
   items: { id: string }[]
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   PENDING: { label: "Pendiente", className: "bg-yellow-100 text-yellow-700" },
-  CONFIRMED: { label: "Confirmado", className: "bg-green-100 text-green-700" },
-  SHIPPED: { label: "Enviado", className: "bg-blue-100 text-blue-700" },
-  DELIVERED: { label: "Entregado", className: "bg-gray-100 text-gray-600" },
+  CONFIRMED: { label: "Pago confirmado", className: "bg-blue-100 text-blue-700" },
+  PREPARING: { label: "En preparación", className: "bg-orange-100 text-orange-700" },
+  SHIPPED: { label: "Enviado", className: "bg-indigo-100 text-indigo-700" },
+  DELIVERED: { label: "Entregado", className: "bg-green-100 text-green-700" },
   CANCELLED: { label: "Cancelado", className: "bg-red-100 text-red-600" },
 }
 
@@ -33,9 +36,12 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })
 }
 
-function customerName(order: OrderRow) {
-  if (!order.user) return "Invitado"
-  return [order.user.firstName, order.user.lastName].filter(Boolean).join(" ") || order.user.email
+function customerLabel(order: OrderRow): { name: string; isGuest: boolean } {
+  if (order.user) {
+    const name = [order.user.firstName, order.user.lastName].filter(Boolean).join(" ") || order.user.email
+    return { name, isGuest: false }
+  }
+  return { name: order.guestName ?? order.guestEmail ?? "Invitado", isGuest: true }
 }
 
 export function OrderTable({ orders }: { orders: OrderRow[] }) {
@@ -118,7 +124,21 @@ export function OrderTable({ orders }: { orders: OrderRow[] }) {
                   <td className="px-6 py-3 font-mono text-xs text-indigo-600">
                     #{order.id.slice(0, 8)}
                   </td>
-                  <td className="px-6 py-3 text-gray-700">{customerName(order)}</td>
+                  <td className="px-6 py-3">
+                    {(() => {
+                      const { name, isGuest } = customerLabel(order)
+                      return (
+                        <span className="flex items-center gap-2">
+                          <span className="text-gray-700">{name}</span>
+                          {isGuest && (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                              Invitado
+                            </span>
+                          )}
+                        </span>
+                      )
+                    })()}
+                  </td>
                   <td className="px-6 py-3 font-medium text-gray-900">{formatCurrency(order.total)}</td>
                   <td className="px-6 py-3">
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}>

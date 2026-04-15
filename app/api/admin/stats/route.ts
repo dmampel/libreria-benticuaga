@@ -116,6 +116,7 @@ export async function GET(request: NextRequest) {
         ordersByStatus: {
           pending: statusCounts["PENDING"] ?? 0,
           confirmed: statusCounts["CONFIRMED"] ?? 0,
+          preparing: statusCounts["PREPARING"] ?? 0,
           shipped: statusCounts["SHIPPED"] ?? 0,
           delivered: statusCounts["DELIVERED"] ?? 0,
           cancelled: statusCounts["CANCELLED"] ?? 0,

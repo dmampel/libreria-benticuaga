@@ -1,6 +1,7 @@
 export const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pendiente",
-  CONFIRMED: "Confirmado",
+  CONFIRMED: "Pago confirmado",
+  PREPARING: "En preparación",
   SHIPPED: "Enviado",
   DELIVERED: "Entregado",
   CANCELLED: "Cancelado",
@@ -9,6 +10,7 @@ export const STATUS_LABELS: Record<string, string> = {
 export const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-50 text-yellow-700",
   CONFIRMED: "bg-blue-50 text-blue-700",
+  PREPARING: "bg-orange-50 text-orange-700",
   SHIPPED: "bg-purple-50 text-purple-700",
   DELIVERED: "bg-green-50 text-green-700",
   CANCELLED: "bg-red-50 text-red-700",

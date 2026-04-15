@@ -38,14 +38,18 @@ interface Order {
   notes: string | null
   createdAt: string
   user: OrderUser | null
+  guestEmail: string | null
+  guestPhone: string | null
+  guestName: string | null
   items: OrderItem[]
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   PENDING: { label: "Pendiente", className: "bg-yellow-100 text-yellow-700" },
-  CONFIRMED: { label: "Confirmado", className: "bg-green-100 text-green-700" },
-  SHIPPED: { label: "Enviado", className: "bg-blue-100 text-blue-700" },
-  DELIVERED: { label: "Entregado", className: "bg-gray-100 text-gray-600" },
+  CONFIRMED: { label: "Pago confirmado", className: "bg-blue-100 text-blue-700" },
+  PREPARING: { label: "En preparación", className: "bg-orange-100 text-orange-700" },
+  SHIPPED: { label: "Enviado", className: "bg-indigo-100 text-indigo-700" },
+  DELIVERED: { label: "Entregado", className: "bg-green-100 text-green-700" },
   CANCELLED: { label: "Cancelado", className: "bg-red-100 text-red-600" },
 }
 
@@ -61,10 +65,6 @@ function formatDateTime(iso: string | null) {
   })
 }
 
-function toDateInput(iso: string | null) {
-  if (!iso) return ""
-  return new Date(iso).toISOString().split("T")[0]
-}
 
 export default function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -81,8 +81,6 @@ export default function AdminOrderDetailPage() {
   const [status, setStatus] = useState("")
   const [shippingAddress, setShippingAddress] = useState("")
   const [trackingNumber, setTrackingNumber] = useState("")
-  const [shippedAt, setShippedAt] = useState("")
-  const [deliveredAt, setDeliveredAt] = useState("")
   const [notes, setNotes] = useState("")
 
   useEffect(() => {
@@ -96,8 +94,6 @@ export default function AdminOrderDetailPage() {
           setStatus(o.status)
           setShippingAddress(o.shippingAddress ?? "")
           setTrackingNumber(o.trackingNumber ?? "")
-          setShippedAt(toDateInput(o.shippedAt))
-          setDeliveredAt(toDateInput(o.deliveredAt))
           setNotes(o.notes ?? "")
         }
       })
@@ -116,7 +112,7 @@ export default function AdminOrderDetailPage() {
       const data = await res.json()
       if (data.success) {
         setStatus(nextStatus)
-        setOrder((prev) => prev ? { ...prev, status: nextStatus } : prev)
+        setOrder((prev) => prev ? { ...prev, ...data.data } : prev)
       }
     } finally {
       setSaving(false)
@@ -134,8 +130,6 @@ export default function AdminOrderDetailPage() {
         body: JSON.stringify({
           shippingAddress: shippingAddress || null,
           trackingNumber: trackingNumber || null,
-          shippedAt: shippedAt || null,
-          deliveredAt: deliveredAt || null,
           notes: notes || null,
         }),
       })
@@ -261,24 +255,13 @@ export default function AdminOrderDetailPage() {
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
                 />
               </div>
-              <div />
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">Fecha de envío</label>
-                <input
-                  type="date"
-                  value={shippedAt}
-                  onChange={(e) => setShippedAt(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
-                />
+                <p className="mb-1 text-xs font-medium text-gray-500">Fecha de envío</p>
+                <p className="text-sm text-gray-700">{formatDateTime(order.shippedAt)}</p>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">Fecha de entrega</label>
-                <input
-                  type="date"
-                  value={deliveredAt}
-                  onChange={(e) => setDeliveredAt(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
-                />
+                <p className="mb-1 text-xs font-medium text-gray-500">Fecha de entrega</p>
+                <p className="text-sm text-gray-700">{formatDateTime(order.deliveredAt)}</p>
               </div>
             </div>
           </div>
@@ -321,13 +304,7 @@ export default function AdminOrderDetailPage() {
 
             {status === "PENDING" && (
               <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => handleQuickAction("CONFIRMED")}
-                  disabled={saving}
-                  className="w-full rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
-                >
-                  ✓ Aceptar pedido
-                </button>
+                <p className="text-center text-xs text-gray-400">Esperando pago de Mercado Pago</p>
                 <button
                   onClick={() => handleQuickAction("CANCELLED")}
                   disabled={saving}
@@ -338,10 +315,28 @@ export default function AdminOrderDetailPage() {
               </div>
             )}
             {status === "CONFIRMED" && (
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => handleQuickAction("PREPARING")}
+                  disabled={saving}
+                  className="w-full rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-600 disabled:opacity-60"
+                >
+                  ✓ Aceptar y preparar
+                </button>
+                <button
+                  onClick={() => handleQuickAction("CANCELLED")}
+                  disabled={saving}
+                  className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-60"
+                >
+                  ✕ Cancelar pedido
+                </button>
+              </div>
+            )}
+            {status === "PREPARING" && (
               <button
                 onClick={() => handleQuickAction("SHIPPED")}
                 disabled={saving}
-                className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+                className="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
               >
                 🚚 Marcar como enviado
               </button>
@@ -350,7 +345,7 @@ export default function AdminOrderDetailPage() {
               <button
                 onClick={() => handleQuickAction("DELIVERED")}
                 disabled={saving}
-                className="w-full rounded-xl bg-gray-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:opacity-60"
+                className="w-full rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
               >
                 ✓ Marcar como entregado
               </button>
@@ -377,7 +372,8 @@ export default function AdminOrderDetailPage() {
                     disabled={saving}
                   >
                     <option value="PENDING">Pendiente</option>
-                    <option value="CONFIRMED">Confirmado</option>
+                    <option value="CONFIRMED">Pago confirmado</option>
+                    <option value="PREPARING">En preparación</option>
                     <option value="SHIPPED">Enviado</option>
                     <option value="DELIVERED">Entregado</option>
                     <option value="CANCELLED">Cancelado</option>
@@ -429,7 +425,37 @@ export default function AdminOrderDetailPage() {
                 </div>
               </dl>
             ) : (
-              <p className="text-sm text-gray-400">Invitado (sin cuenta)</p>
+              <dl className="space-y-2 text-sm">
+                <div className="mb-2">
+                  <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                    Invitado
+                  </span>
+                </div>
+                {order.guestName && (
+                  <div>
+                    <dt className="text-xs text-gray-400">Nombre</dt>
+                    <dd className="font-medium text-gray-800">{order.guestName}</dd>
+                  </div>
+                )}
+                {order.guestEmail && (
+                  <div>
+                    <dt className="text-xs text-gray-400">Email</dt>
+                    <dd className="text-gray-700">{order.guestEmail}</dd>
+                  </div>
+                )}
+                {order.guestPhone && (
+                  <div>
+                    <dt className="text-xs text-gray-400">Teléfono</dt>
+                    <dd className="text-gray-700">{order.guestPhone}</dd>
+                  </div>
+                )}
+                {order.shippingAddress && (
+                  <div>
+                    <dt className="text-xs text-gray-400">Dirección</dt>
+                    <dd className="text-gray-700">{order.shippingAddress}</dd>
+                  </div>
+                )}
+              </dl>
             )}
           </div>
 

@@ -24,6 +24,8 @@ interface RecentOrder {
   total: number
   status: string
   createdAt: string
+  guestName: string | null
+  guestEmail: string | null
   user: { email: string; firstName: string | null; lastName: string | null } | null
 }
 
@@ -35,12 +37,13 @@ interface RevenueDay {
 interface OrdersByStatus {
   pending: number
   confirmed: number
+  preparing: number
   shipped: number
   delivered: number
   cancelled: number
 }
 
-const EMPTY_STATUS: OrdersByStatus = { pending: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0 }
+const EMPTY_STATUS: OrdersByStatus = { pending: 0, confirmed: 0, preparing: 0, shipped: 0, delivered: 0, cancelled: 0 }
 
 interface Stats {
   totalOrders: number
@@ -57,7 +60,10 @@ interface Stats {
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   PENDING: { label: "Pendiente", className: "bg-yellow-100 text-yellow-700" },
-  CONFIRMED: { label: "Confirmado", className: "bg-green-100 text-green-700" },
+  CONFIRMED: { label: "Pago confirmado", className: "bg-blue-100 text-blue-700" },
+  PREPARING: { label: "En preparación", className: "bg-orange-100 text-orange-700" },
+  SHIPPED: { label: "Enviado", className: "bg-indigo-100 text-indigo-700" },
+  DELIVERED: { label: "Entregado", className: "bg-green-100 text-green-700" },
   CANCELLED: { label: "Cancelado", className: "bg-red-100 text-red-700" },
 }
 
@@ -67,6 +73,16 @@ function formatCurrency(value: number) {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
+}
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const minutes = Math.floor(diff / 60000)
+  if (minutes < 1) return "ahora"
+  if (minutes < 60) return `hace ${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `hace ${hours} h`
+  return `hace ${Math.floor(hours / 24)} d`
 }
 
 export default function AdminDashboardPage() {
@@ -102,12 +118,82 @@ export default function AdminDashboardPage() {
     )
   }
 
+  const pendingCount = stats.ordersByStatus?.pending ?? 0
+  const pendingOrders = stats.recentOrders.filter((o) => o.status === "PENDING")
+
   return (
     <div className="p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-1 text-sm text-gray-500">Resumen general del negocio</p>
       </div>
+
+      {/* Pending Orders Alert */}
+      {pendingCount > 0 && (
+        <div className="mb-8 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50">
+          {/* Header row */}
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-3">
+              {/* Bell icon with pulse */}
+              <div className="relative flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+                  <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                </div>
+                <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-500" />
+                </span>
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-amber-900">
+                  {pendingCount} pedido{pendingCount !== 1 ? "s" : ""} pendiente{pendingCount !== 1 ? "s" : ""}
+                </h2>
+                <p className="text-xs text-amber-600">Esperando confirmación</p>
+              </div>
+            </div>
+            <a
+              href="/admin/orders?status=PENDING"
+              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
+            >
+              Ver todos →
+            </a>
+          </div>
+
+          {/* Recent pending orders */}
+          {pendingOrders.length > 0 && (
+            <div className="border-t border-amber-200/70 divide-y divide-amber-100">
+              {pendingOrders.slice(0, 3).map((order) => {
+                const name = order.user
+                  ? [order.user.firstName, order.user.lastName].filter(Boolean).join(" ") || order.user.email
+                  : order.guestName ?? order.guestEmail ?? "Invitado"
+                return (
+                  <a
+                    key={order.id}
+                    href={`/admin/orders/${order.id}`}
+                    className="flex items-center justify-between px-6 py-3 transition-colors hover:bg-amber-100/50"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="font-mono text-xs text-amber-500 flex-shrink-0">
+                        #{order.id.slice(0, 8)}
+                      </span>
+                      <span className="truncate text-sm font-medium text-amber-900">{name}</span>
+                    </div>
+                    <div className="flex items-center gap-4 flex-shrink-0 ml-4">
+                      <span className="text-sm font-bold text-amber-900">{formatCurrency(order.total)}</span>
+                      <span className="text-xs text-amber-500 w-20 text-right">{timeAgo(order.createdAt)}</span>
+                      <svg className="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </a>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -152,10 +238,11 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Order Pipeline */}
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {[
           { label: "Pendientes", count: (stats.ordersByStatus ?? EMPTY_STATUS).pending, color: "bg-yellow-50 border-yellow-200 text-yellow-700", dot: "bg-yellow-400", href: "/admin/orders?status=PENDING" },
-          { label: "Confirmados", count: (stats.ordersByStatus ?? EMPTY_STATUS).confirmed, color: "bg-blue-50 border-blue-200 text-blue-700", dot: "bg-blue-400", href: "/admin/orders?status=CONFIRMED" },
+          { label: "Pago confirmado", count: (stats.ordersByStatus ?? EMPTY_STATUS).confirmed, color: "bg-blue-50 border-blue-200 text-blue-700", dot: "bg-blue-400", href: "/admin/orders?status=CONFIRMED" },
+          { label: "En preparación", count: (stats.ordersByStatus ?? EMPTY_STATUS).preparing, color: "bg-orange-50 border-orange-200 text-orange-700", dot: "bg-orange-400", href: "/admin/orders?status=PREPARING" },
           { label: "Enviados", count: (stats.ordersByStatus ?? EMPTY_STATUS).shipped, color: "bg-indigo-50 border-indigo-200 text-indigo-700", dot: "bg-indigo-400", href: "/admin/orders?status=SHIPPED" },
           { label: "Entregados", count: (stats.ordersByStatus ?? EMPTY_STATUS).delivered, color: "bg-green-50 border-green-200 text-green-700", dot: "bg-green-400", href: "/admin/orders?status=DELIVERED" },
           { label: "Cancelados", count: (stats.ordersByStatus ?? EMPTY_STATUS).cancelled, color: "bg-gray-50 border-gray-200 text-gray-500", dot: "bg-gray-300", href: "/admin/orders?status=CANCELLED" },

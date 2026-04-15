@@ -17,8 +17,10 @@ interface RequestBody {
   items: CheckoutItem[]
   total: number
   userRole: Role
-  userId?: string
-  userEmail?: string
+  guestEmail: string
+  guestPhone: string
+  guestName: string
+  guestAddress: string
 }
 
 // ============ POST /api/checkout/mercado-pago ============
@@ -38,7 +40,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const body = (await request.json()) as RequestBody
-    const { items, total, userRole, userId } = body
+    const { items, total, userRole, guestEmail, guestPhone, guestName, guestAddress } = body
 
     // ── Validation ──────────────────────────────────────────────
     if (!items || items.length === 0) {
@@ -89,7 +91,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const newOrder = await tx.order.create({
         data: {
           id: orderId,
-          userId: userId ?? null,
+          guestEmail,
+          guestPhone,
+          guestName,
+          shippingAddress: guestAddress,
           total,
           userRole,
           status: "PENDING",
@@ -109,7 +114,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return newOrder
     })
 
-    console.log(`[MP Checkout] Order created: ${order.id} | $${total.toFixed(2)} | ${userRole}`)
+    console.log(`[MP Checkout] Order created: ${order.id} | $${total.toFixed(2)} | ${userRole} | guest: ${guestEmail}`)
     console.log(`[MP Checkout] Preference: ${preferenceId} | url: ${checkoutUrl}`)
 
     return NextResponse.json({ success: true, checkoutUrl, preferenceId, orderId: order.id })

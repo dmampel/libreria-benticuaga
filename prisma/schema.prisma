@@ -108,6 +108,10 @@ model Order {
   userRole        String      @default("RETAIL") // pricing tier at time of order
   paymentMethod   String?     // "MERCADO_PAGO" | "WHATSAPP" | null
   transactionId   String?     // MP payment ID when confirmed
+  // Guest checkout fields (when no userId)
+  guestEmail      String?
+  guestPhone      String?
+  guestName       String?
   shippingAddress        String?
   trackingNumber         String?
   shippedAt              DateTime?
@@ -136,11 +140,12 @@ model ActivityLog {
 }
 
 enum OrderStatus {
-  PENDING   // Initial state — awaiting review
-  CONFIRMED // Order accepted (payment verified or WhatsApp agreement)
+  PENDING   // Order created — awaiting payment confirmation
+  CONFIRMED // Payment received via Mercado Pago webhook
+  PREPARING // Admin accepted and is preparing the order
   SHIPPED   // Order dispatched
   DELIVERED // Order received by customer
-  CANCELLED // Order invalid or cancelled
+  CANCELLED // Cancelled by admin or system
 }
 
 // ============ EMAIL PREFERENCES ============

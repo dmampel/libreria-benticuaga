@@ -131,18 +131,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           items: { include: { product: { select: { id: true, name: true } } } },
         },
       })
+
+      const recipientEmail = confirmedOrder.user?.email ?? confirmedOrder.guestEmail ?? null
       console.log(`[MP Webhook] Order ${orderId} → CONFIRMED (tx: ${mpPaymentId})`)
-      console.log(`[MP Webhook] User on order: ${confirmedOrder.user?.email ?? "none (guest order)"}`)
+      console.log(`[MP Webhook] Recipient email: ${recipientEmail ?? "none — email skipped"}`)
       console.log(`[MP Webhook] Items on order: ${confirmedOrder.items.length}`)
 
-      if (confirmedOrder.user?.email) {
+      if (recipientEmail) {
         sendOrderConfirmationEmailWithInvoice({
           ...confirmedOrder,
           shippingAddress: confirmedOrder.shippingAddress ?? null,
           trackingNumber: confirmedOrder.trackingNumber ?? null,
+          guestEmail: confirmedOrder.guestEmail ?? null,
+          guestName: confirmedOrder.guestName ?? null,
         }).catch((err) => console.error("[MP Webhook] Failed to send confirmation email:", err))
       } else {
-        console.warn(`[MP Webhook] No user email found for order ${orderId} — confirmation email skipped`)
+        console.warn(`[MP Webhook] No email found for order ${orderId} — confirmation email skipped`)
       }
     } else if (paymentStatus === "rejected" || paymentStatus === "cancelled") {
       await prisma.order.update({
