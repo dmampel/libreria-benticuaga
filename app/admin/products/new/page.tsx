@@ -27,11 +27,12 @@ export default function AdminNewProductPage() {
           stock: data.stock,
           image: data.image,
           categoryId: data.categoryId || null,
+          brandId: data.brandId || null,
         }),
       })
       const result = await res.json()
       if (!result.success) return { error: result.error }
-      router.push(`/admin/products/${result.data.id}`)
+      router.push(`/admin/products`)
       return {}
     } finally {
       setSaving(false)
@@ -48,7 +49,7 @@ export default function AdminNewProductPage() {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Nuevo producto</h1>
       </div>
-      <div className="max-w-2xl">
+      <div className="max-w-6xl">
         <ProductForm submitLabel="Crear producto" onSubmit={handleSubmit} saving={saving} />
       </div>
     </div>

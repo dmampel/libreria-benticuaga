@@ -42,6 +42,7 @@ export default function BrandsCarousel({ brands }: Props) {
                 <Link
                   key={brand.id}
                   href={`/products?brand=${brand.id}`}
+                  scroll={false}
                   aria-label={`Ver productos de ${brand.name}`}
                   className="group relative shrink-0"
                 >

@@ -41,6 +41,8 @@ export interface CartContextType {
   clearCart: () => void
   getTotal: () => number
   getItemCount: () => number
+  isCartOpen: boolean
+  setIsCartOpen: (open: boolean) => void
 }
 
 // ============ Context ============
@@ -124,6 +126,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [userRole, setUserRoleState] = useState<Role>("RETAIL")
   const [hydrated, setHydrated] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
 
   // Track previous auth state to detect login/logout transitions
   const prevAuthRef = useRef<boolean | null>(null)
@@ -300,8 +303,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // ============ Unified interface ============
 
   const addItem = useCallback(
-    (product: Omit<CartItem, "quantity">, quantity: number = 1) =>
-      isAuthenticated ? addItemApi(product, quantity) : addItemLocal(product, quantity),
+    (product: Omit<CartItem, "quantity">, quantity: number = 1) => {
+      if (isAuthenticated) {
+        addItemApi(product, quantity)
+      } else {
+        addItemLocal(product, quantity)
+      }
+      // Auto-open the cart drawer whenever an item is added
+      setIsCartOpen(true)
+    },
     [isAuthenticated, addItemApi, addItemLocal]
   )
 
@@ -353,6 +363,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         clearCart,
         getTotal,
         getItemCount,
+        isCartOpen,
+        setIsCartOpen,
       }}
     >
       {children}

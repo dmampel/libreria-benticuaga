@@ -8,7 +8,9 @@ interface Category {
   name: string
   slug: string
   icon: string | null
+  parentId: string | null
   _count: { products: number }
+  children?: Category[]
 }
 
 interface CategoryData {
@@ -16,6 +18,7 @@ interface CategoryData {
   name: string
   slug: string
   icon: string
+  parentId?: string | null
 }
 
 function slugify(str: string) {
@@ -52,7 +55,7 @@ export default function AdminCategoriesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   
   // Form State
-  const [form, setForm] = useState<CategoryData>({ name: "", slug: "", icon: "" })
+  const [form, setForm] = useState<CategoryData>({ name: "", slug: "", icon: "", parentId: null })
   const [slugEdited, setSlugEdited] = useState(false)
   const [saving, setSaving] = useState(false)
   
@@ -116,14 +119,14 @@ export default function AdminCategoriesPage() {
 
   function handleEditClick(cat: Category) {
     setFormError("")
-    setForm({ id: cat.id, name: cat.name, slug: cat.slug, icon: cat.icon || "" })
+    setForm({ id: cat.id, name: cat.name, slug: cat.slug, icon: cat.icon || "", parentId: cat.parentId })
     setSlugEdited(true)
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   function handleResetForm() {
     setFormError("")
-    setForm({ id: undefined, name: "", slug: "", icon: "" })
+    setForm({ id: undefined, name: "", slug: "", icon: "", parentId: null })
     setSlugEdited(false)
   }
 
@@ -146,6 +149,7 @@ export default function AdminCategoriesPage() {
         name: form.name.trim(),
         slug: form.slug.trim(),
         icon: form.icon.trim() || null,
+        parentId: form.parentId || null,
       }),
     })
     
@@ -288,6 +292,22 @@ export default function AdminCategoriesPage() {
             )}
 
             <form onSubmit={handleFormSubmit} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  Categoría Padre (Opcional)
+                </label>
+                <select
+                  value={form.parentId || ""}
+                  onChange={(e) => setForm((prev) => ({ ...prev, parentId: e.target.value || null }))}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+                >
+                  <option value="">-- Ninguna (Categoría Principal) --</option>
+                  {categories.filter(c => !c.parentId && c.id !== form.id).map(parent => (
+                    <option key={parent.id} value={parent.id}>{parent.name}</option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">
                   Nombre *

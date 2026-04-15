@@ -12,6 +12,7 @@ export interface ProductRow {
   stock: number
   image: string
   category: { id: string; name: string } | null
+  brand: { id: string; name: string } | null
 }
 
 type SortKey = "name" | "retailPrice" | "stock"
@@ -188,6 +189,7 @@ export function ProductTable({ products, onStockUpdated, onDeleted }: Props) {
                 Nombre <SortIcon k="name" />
               </th>
               <th className="px-4 py-3">Categoría</th>
+              <th className="px-4 py-3">Marca</th>
               <th
                 className="cursor-pointer px-4 py-3 hover:text-gray-600"
                 onClick={() => toggleSort("retailPrice")}
@@ -207,7 +209,7 @@ export function ProductTable({ products, onStockUpdated, onDeleted }: Props) {
           <tbody className="divide-y divide-gray-50">
             {visible.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-400">
+                <td colSpan={9} className="px-4 py-12 text-center text-sm text-gray-400">
                   Sin productos
                 </td>
               </tr>
@@ -225,6 +227,7 @@ export function ProductTable({ products, onStockUpdated, onDeleted }: Props) {
                 <td className="px-4 py-3 font-mono text-xs text-gray-400">{product.id}</td>
                 <td className="px-4 py-3 font-medium text-gray-800">{product.name}</td>
                 <td className="px-4 py-3 text-gray-500">{product.category?.name ?? "—"}</td>
+                <td className="px-4 py-3 text-gray-500">{product.brand?.name ?? "—"}</td>
                 <td className="px-4 py-3 text-gray-700">{formatCurrency(product.retailPrice)}</td>
                 <td className="px-4 py-3 text-gray-500">{formatCurrency(product.wholesalePrice)}</td>
                 <td className="px-4 py-3">

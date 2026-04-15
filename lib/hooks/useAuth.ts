@@ -19,6 +19,7 @@ interface AuthUser {
   id: string
   email: string
   role: string
+  isAdmin?: boolean
   firstName?: string
   lastName?: string
 }
@@ -55,6 +56,7 @@ function parseToken(token: string | null): AuthUser | null {
       id: decoded.id,
       email: decoded.email,
       role: decoded.role,
+      isAdmin: decoded.isAdmin,
       firstName: decoded.firstName,
       lastName: decoded.lastName,
     }

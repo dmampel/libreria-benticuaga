@@ -31,10 +31,18 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params
-    const { name, slug, icon } = await request.json()
+    const { name, slug, icon, parentId } = await request.json()
 
     if (!name?.trim()) return NextResponse.json({ success: false, error: "Nombre requerido" }, { status: 400 })
     if (!slug?.trim()) return NextResponse.json({ success: false, error: "Slug requerido" }, { status: 400 })
+
+    if (parentId === id) return NextResponse.json({ success: false, error: "Una categoría no puede ser padre de sí misma" }, { status: 400 })
+
+    if (parentId) {
+      const parentExists = await prisma.category.findUnique({ where: { id: parentId } })
+      if (!parentExists) return NextResponse.json({ success: false, error: "Categoría padre no encontrada" }, { status: 400 })
+      // Prevent nesting more than 1 level if desired, optional, but let's keep it simple for now
+    }
 
     const slugConflict = await prisma.category.findFirst({
       where: { slug: slug.trim(), NOT: { id } },
@@ -43,7 +51,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const category = await prisma.category.update({
       where: { id },
-      data: { name: name.trim(), slug: slug.trim(), icon: icon?.trim() || null },
+      data: { name: name.trim(), slug: slug.trim(), icon: icon?.trim() || null, parentId: parentId || null },
     })
 
     await prisma.activityLog.create({
@@ -70,9 +78,17 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const productCount = await prisma.product.count({ where: { categoryId: id } })
     if (productCount > 0) {
       return NextResponse.json(
-        { success: false, error: `No se puede eliminar: tiene ${productCount} producto(s) asociado(s)` },
+        { success: false, error: `No se puede eliminar: tiene ${productCount} producto(s) asociado(s).` },
         { status: 409 }
       )
+    }
+
+    const childCount = await prisma.category.count({ where: { parentId: id } })
+    if (childCount > 0) {
+       return NextResponse.json(
+        { success: false, error: `No se puede eliminar: tiene ${childCount} subcategoría(s) hija(s) asociada(s).` },
+        { status: 409 }
+       )
     }
 
     const category = await prisma.category.delete({ where: { id } })

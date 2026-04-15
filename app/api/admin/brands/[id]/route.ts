@@ -57,6 +57,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         image: image?.trim() || null,
         searchName: name.trim().toLowerCase(),
       },
+      include: { _count: { select: { products: true } } },
     })
 
     await prisma.activityLog.create({

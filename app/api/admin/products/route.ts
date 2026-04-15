@@ -35,7 +35,10 @@ export async function GET(request: NextRequest) {
     const products = await prisma.product.findMany({
       where,
       orderBy,
-      include: { category: { select: { id: true, name: true } } },
+      include: { 
+        category: { select: { id: true, name: true } },
+        brand: { select: { id: true, name: true } },
+      },
     })
 
     return NextResponse.json({ success: true, data: products })
@@ -54,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id, name, description, retailPrice, wholesalePrice, stock, image, categoryId } = body
+    const { id, name, description, retailPrice, wholesalePrice, stock, image, categoryId, brandId } = body
 
     const resolvedId = id?.trim() ||
       "PRD-" + Math.random().toString(36).slice(2, 7).toUpperCase()
@@ -77,8 +80,12 @@ export async function POST(request: NextRequest) {
         stock: Number(stock),
         image: image?.trim() || "",
         categoryId: categoryId || null,
+        brandId: brandId || null,
       },
-      include: { category: { select: { id: true, name: true } } },
+      include: {
+        category: { select: { id: true, name: true } },
+        brand: { select: { id: true, name: true } },
+      },
     })
 
     await prisma.activityLog.create({

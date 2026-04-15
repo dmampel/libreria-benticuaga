@@ -5,6 +5,9 @@ export async function GET() {
   try {
     const categories = await prisma.category.findMany({
       orderBy: { name: "asc" },
+      include: {
+        children: true,
+      }
     })
     return NextResponse.json({ success: true, data: categories })
   } catch (error) {

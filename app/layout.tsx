@@ -2,12 +2,13 @@ import type { Metadata } from "next"
 import { Geist } from "next/font/google"
 import { Suspense } from "react"
 import "./globals.css"
-import Footer from "@/components/Footer"
+import ConditionalFooter from "@/components/ConditionalFooter"
 import ToastContainer from "@/components/ToastContainer"
 import { CartProvider } from "@/context/CartContext"
 import { AuthProvider } from "@/lib/hooks/useAuth"
 import { ToastProvider } from "@/context/ToastContext"
 import ClearCartOnSuccess from "@/components/ClearCartOnSuccess"
+import CartSidebar from "@/components/CartSidebar"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,8 +34,9 @@ export default function RootLayout({
               <Suspense fallback={null}>
                 <ClearCartOnSuccess />
               </Suspense>
+              <CartSidebar />
               <main className="flex-1">{children}</main>
-              <Footer />
+              <ConditionalFooter />
             </CartProvider>
           </AuthProvider>
           <ToastContainer />

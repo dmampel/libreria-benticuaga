@@ -1,15 +1,14 @@
 "use client"
 
-import Link from "next/link"
 import { useCart } from "@/lib/hooks/useCart"
 
 export default function CartSummary() {
-  const { getItemCount } = useCart()
+  const { getItemCount, setIsCartOpen } = useCart()
   const count = getItemCount()
 
   return (
-    <Link
-      href="/cart"
+    <button
+      onClick={() => setIsCartOpen(true)}
       aria-label={`Carrito — ${count} ${count === 1 ? "item" : "items"}`}
       className="relative flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900"
     >
@@ -34,6 +33,6 @@ export default function CartSummary() {
           {count > 99 ? "99+" : count}
         </span>
       )}
-    </Link>
+    </button>
   )
 }

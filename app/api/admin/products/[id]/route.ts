@@ -15,7 +15,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { id } = await context.params
     const product = await prisma.product.findUnique({
       where: { id },
-      include: { category: { select: { id: true, name: true } } },
+      include: {
+        category: { select: { id: true, name: true } },
+        brand: { select: { id: true, name: true } },
+      },
     })
 
     if (!product) {
@@ -39,7 +42,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params
     const body = await request.json()
-    const { name, description, retailPrice, wholesalePrice, stock, image, categoryId } = body
+    const { name, description, retailPrice, wholesalePrice, stock, image, categoryId, brandId } = body
 
     if (!name?.trim()) return NextResponse.json({ success: false, error: "Nombre requerido" }, { status: 400 })
     if (!retailPrice || Number(retailPrice) <= 0) return NextResponse.json({ success: false, error: "Precio minorista inválido" }, { status: 400 })
@@ -56,8 +59,12 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         stock: Number(stock),
         image: image?.trim() || "",
         categoryId: categoryId || null,
+        brandId: brandId || null,
       },
-      include: { category: { select: { id: true, name: true } } },
+      include: {
+        category: { select: { id: true, name: true } },
+        brand: { select: { id: true, name: true } },
+      },
     })
 
     await prisma.activityLog.create({

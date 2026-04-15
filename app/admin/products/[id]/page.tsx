@@ -32,6 +32,7 @@ export default function AdminEditProductPage() {
             stock: String(p.stock),
             image: p.image ?? "",
             categoryId: p.categoryId ?? "",
+            brandId: p.brandId ?? "",
           })
         } else {
           setError("Producto no encontrado")
@@ -55,10 +56,12 @@ export default function AdminEditProductPage() {
           stock: data.stock,
           image: data.image,
           categoryId: data.categoryId || null,
+          brandId: data.brandId || null,
         }),
       })
       const result = await res.json()
       if (!result.success) return { error: result.error }
+      router.push("/admin/products")
       return {}
     } finally {
       setSaving(false)
@@ -110,7 +113,7 @@ export default function AdminEditProductPage() {
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
-      <div className="max-w-2xl">
+      <div className="max-w-6xl">
         <ProductForm
           initial={initial}
           idReadOnly

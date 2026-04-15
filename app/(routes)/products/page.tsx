@@ -18,10 +18,22 @@ export default async function ProductsPage({ searchParams }: Props) {
   const { category, brand, q: qRaw } = await searchParams;
   const q = normalizeText(qRaw);
 
+  let categoryFilter = {};
+  if (category) {
+    const foundCategory = await prisma.category.findUnique({
+      where: { slug: category },
+      include: { children: true }
+    });
+    if (foundCategory) {
+      const categoryIds = [foundCategory.id, ...foundCategory.children.map(c => c.id)];
+      categoryFilter = { categoryId: { in: categoryIds } };
+    }
+  }
+
   const [products, brands] = await Promise.all([
     prisma.product.findMany({
       where: {
-        ...(category ? { category: { slug: category } } : {}),
+        ...categoryFilter,
         ...(brand ? { brandId: brand } : {}),
         ...(q
           ? {

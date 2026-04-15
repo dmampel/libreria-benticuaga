@@ -6,6 +6,13 @@ import { useAuth } from "@/lib/hooks/useAuth";
 interface Category {
   id: string;
   name: string;
+  parentId: string | null;
+  children?: Category[];
+}
+
+interface Brand {
+  id: string;
+  name: string;
 }
 
 export interface ProductFormData {
@@ -17,6 +24,7 @@ export interface ProductFormData {
   stock: string;
   image: string;
   categoryId: string;
+  brandId: string;
 }
 
 interface Props {
@@ -37,6 +45,7 @@ const empty: ProductFormData = {
   stock: "0",
   image: "",
   categoryId: "",
+  brandId: "",
 };
 
 export function ProductForm({
@@ -50,15 +59,20 @@ export function ProductForm({
   const { token } = useAuth();
   const [form, setForm] = useState<ProductFormData>({ ...empty, ...initial });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     fetch("/api/categories")
       .then((r) => r.json())
-      .then((d) => {
-        if (d.success) setCategories(d.data);
-      });
+      .then((d) => { if (d.success) setCategories(d.data) });
+
+    if (token) {
+      fetch("/api/admin/brands", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((d) => { if (d.success) setBrands(d.data) });
+    }
   }, [token]);
 
   function set(field: keyof ProductFormData) {
@@ -77,15 +91,16 @@ export function ProductForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="col-span-1 lg:col-span-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-        <h2 className="mb-5 text-sm font-semibold text-gray-700">
+      <div className="space-y-6 lg:col-span-2">
+        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+          <h2 className="mb-5 text-sm font-semibold text-gray-700">
           Información del producto
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -111,9 +126,31 @@ export function ProductForm({
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
             >
               <option value="">Sin categoría</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+              {categories.filter(c => !c.parentId).map((c) => (
+                <optgroup key={c.id} label={c.name}>
+                  <option value={c.id}>{c.name} (General)</option>
+                  {c.children?.map(child => (
+                    <option key={child.id} value={child.id}>
+                      ↳ {child.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+              Marca
+            </label>
+            <select
+              value={form.brandId}
+              onChange={set("brandId")}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+            >
+              <option value="">Sin marca</option>
+              {brands.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
                 </option>
               ))}
             </select>
@@ -144,12 +181,14 @@ export function ProductForm({
           </div>
         </div>
       </div>
+      </div>
 
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-        <h2 className="mb-5 text-sm font-semibold text-gray-700">
-          Precios y stock
-        </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="space-y-6 lg:col-span-1">
+        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+          <h2 className="mb-5 text-sm font-semibold text-gray-700">
+            Precios y stock
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-500">
               Precio minorista *
@@ -251,13 +290,14 @@ export function ProductForm({
           <div />
         )}
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
-        >
-          {saving ? "Guardando…" : submitLabel}
-        </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+          >
+            {saving ? "Guardando…" : submitLabel}
+          </button>
+        </div>
       </div>
     </form>
   );

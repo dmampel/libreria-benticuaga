@@ -75,7 +75,6 @@ export default function AdminOrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
 
   // Editable fields
   const [status, setStatus] = useState("")
@@ -122,7 +121,6 @@ export default function AdminOrderDetailPage() {
   async function handleSave() {
     if (!token) return
     setSaving(true)
-    setSaved(false)
     try {
       const res = await fetch(`/api/admin/orders/${id}`, {
         method: "PATCH",
@@ -136,8 +134,7 @@ export default function AdminOrderDetailPage() {
       const data = await res.json()
       if (data.success) {
         setOrder((prev) => prev ? { ...prev, ...data.data } : prev)
-        setSaved(true)
-        setTimeout(() => setSaved(false), 2500)
+        router.push("/admin/orders")
       }
     } finally {
       setSaving(false)
@@ -280,7 +277,6 @@ export default function AdminOrderDetailPage() {
 
           {/* Save shipping + notes */}
           <div className="flex items-center justify-end gap-3">
-            {saved && <span className="text-sm text-emerald-600">✓ Guardado</span>}
             <button
               onClick={handleSave}
               disabled={saving}

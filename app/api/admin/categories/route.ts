@@ -11,7 +11,10 @@ export async function GET(request: NextRequest) {
 
     const categories = await prisma.category.findMany({
       orderBy: { name: "asc" },
-      include: { _count: { select: { products: true } } },
+      include: { 
+        _count: { select: { products: true } },
+        children: true,
+      },
     })
 
     return NextResponse.json({ success: true, data: categories })
@@ -29,16 +32,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "No autorizado" }, { status: 401 })
     }
 
-    const { name, slug, icon } = await request.json()
+    const { name, slug, icon, parentId } = await request.json()
 
     if (!name?.trim()) return NextResponse.json({ success: false, error: "Nombre requerido" }, { status: 400 })
     if (!slug?.trim()) return NextResponse.json({ success: false, error: "Slug requerido" }, { status: 400 })
+
+    // Validar que parentId exista si es enviado
+    if (parentId) {
+      const parentExists = await prisma.category.findUnique({ where: { id: parentId } })
+      if (!parentExists) return NextResponse.json({ success: false, error: "Categoría padre no encontrada" }, { status: 400 })
+    }
 
     const existing = await prisma.category.findUnique({ where: { slug: slug.trim() } })
     if (existing) return NextResponse.json({ success: false, error: "Ya existe una categoría con ese slug" }, { status: 409 })
 
     const category = await prisma.category.create({
-      data: { name: name.trim(), slug: slug.trim(), icon: icon?.trim() || null },
+      data: { name: name.trim(), slug: slug.trim(), icon: icon?.trim() || null, parentId: parentId || null },
     })
 
     await prisma.activityLog.create({
