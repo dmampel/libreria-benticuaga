@@ -3,6 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import ProductActions from "@/components/ProductActions"
+import { getBrandColor } from "@/lib/brands"
 
 interface Props {
   params: Promise<{ id: string }>
@@ -10,23 +11,26 @@ interface Props {
 
 export default async function ProductDetailPage({ params }: Props) {
   const { id } = await params
-  const product = await prisma.product.findUnique({ where: { id } })
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: { brand: true }
+  })
 
   if (!product) notFound()
 
   const hasImage = product.image.startsWith("http")
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto w-[95%] px-4 py-10 sm:px-6 lg:px-8">
       {/* Back link */}
       <Link
         href="/products"
-        className="mb-8 inline-flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-900"
+        className="font-sans mb-8 inline-flex items-center gap-1.5 text-lg text-gray-500 transition-colors hover:text-gray-900"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
         </svg>
-        Volver a productos
+        Volver a la tienda
       </Link>
 
       {/* Detail grid: image left / info right on desktop */}
@@ -62,14 +66,17 @@ export default async function ProductDetailPage({ params }: Props) {
         </div>
 
         {/* Info */}
-        <div className="flex flex-col gap-6">
-          {/* ID badge */}
-          <p className="text-xs font-medium uppercase tracking-widest text-gray-400">
-            #{product.id}
-          </p>
+        <div className="flex flex-col gap-6 font-sans">
+          {product.brand?.name && (
+            <div>
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest text-white shadow-sm ${getBrandColor(product.brand.name)}`}>
+                {product.brand.name}
+              </span>
+            </div>
+          )}
 
           {/* Name */}
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
+          <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900 lg:text-4xl">
             {product.name}
           </h1>
 

@@ -8,6 +8,7 @@ interface Category {
   name: string
   slug: string
   icon: string | null
+  image: string | null
   parentId: string | null
   _count: { products: number }
   children?: Category[]
@@ -18,6 +19,7 @@ interface CategoryData {
   name: string
   slug: string
   icon: string
+  image: string
   parentId?: string | null
 }
 
@@ -55,7 +57,7 @@ export default function AdminCategoriesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   
   // Form State
-  const [form, setForm] = useState<CategoryData>({ name: "", slug: "", icon: "", parentId: null })
+  const [form, setForm] = useState<CategoryData>({ name: "", slug: "", icon: "", image: "", parentId: null })
   const [slugEdited, setSlugEdited] = useState(false)
   const [saving, setSaving] = useState(false)
   
@@ -119,14 +121,14 @@ export default function AdminCategoriesPage() {
 
   function handleEditClick(cat: Category) {
     setFormError("")
-    setForm({ id: cat.id, name: cat.name, slug: cat.slug, icon: cat.icon || "", parentId: cat.parentId })
+    setForm({ id: cat.id, name: cat.name, slug: cat.slug, icon: cat.icon || "", image: cat.image || "", parentId: cat.parentId })
     setSlugEdited(true)
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   function handleResetForm() {
     setFormError("")
-    setForm({ id: undefined, name: "", slug: "", icon: "", parentId: null })
+    setForm({ id: undefined, name: "", slug: "", icon: "", image: "", parentId: null })
     setSlugEdited(false)
   }
 
@@ -149,6 +151,7 @@ export default function AdminCategoriesPage() {
         name: form.name.trim(),
         slug: form.slug.trim(),
         icon: form.icon.trim() || null,
+        image: form.image.trim() || null,
         parentId: form.parentId || null,
       }),
     })
@@ -350,6 +353,22 @@ export default function AdminCategoriesPage() {
                     <span className="text-3xl">{form.icon}</span>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  Imagen (URL, opcional)
+                </label>
+                <input
+                  type="url"
+                  value={form.image}
+                  onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))}
+                  placeholder="https://..."
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+                />
+                {form.image && (
+                  <img src={form.image} alt="preview" className="mt-2 h-16 w-16 rounded-lg object-cover ring-1 ring-gray-200" />
+                )}
               </div>
 
               <div className="pt-2">

@@ -3,7 +3,8 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useCart } from "@/lib/hooks/useCart"
-import { getPrice, getPriceLabel } from "@/lib/pricing"
+import { getPrice } from "@/lib/pricing"
+import { getBrandColor } from "@/lib/brands"
 
 interface Product {
   id: string
@@ -12,6 +13,7 @@ interface Product {
   wholesalePrice: number
   stock: number
   image: string
+  brand?: { name: string } | null
 }
 
 export default function ProductCard({ 
@@ -25,7 +27,8 @@ export default function ProductCard({
   const hasImage = product.image.startsWith("http")
   const displayPrice = getPrice(product, userRole)
 
-  function handleAddToCart() {
+  function handleAddToCart(e: React.MouseEvent) {
+    e.preventDefault()
     addItem({
       productId: product.id,
       name: product.name,
@@ -37,9 +40,9 @@ export default function ProductCard({
   }
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-100/40">
       {/* Image */}
-      <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
+      <Link href={`/products/${product.id}`} className="relative aspect-square w-full overflow-hidden bg-gray-50/30 block">
         {hasImage ? (
           <Image
             src={product.image}
@@ -47,7 +50,7 @@ export default function ProductCard({
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={priority}
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-contain p-6 transition-transform duration-500 group-hover:scale-110"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -68,41 +71,41 @@ export default function ProductCard({
         )}
 
         {product.stock === 0 && (
-          <span className="absolute left-2 top-2 rounded-full bg-gray-700 px-2 py-0.5 text-xs font-medium text-white">
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-red-500/95 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm backdrop-blur-sm">
             Sin stock
           </span>
         )}
-      </div>
+
+        {product.brand?.name && (
+          <span className={`absolute right-3 top-3 z-10 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm transition-all duration-300 opacity-90 group-hover:opacity-100 ${getBrandColor(product.brand.name)}`}>
+            {product.brand.name}
+          </span>
+        )}
+      </Link>
 
       {/* Body */}
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex-1">
-          <h2 className="line-clamp-2 text-sm font-semibold leading-snug text-gray-900">
+      <div className="flex font-sans flex-1 flex-col p-5 sm:p-6">
+        <Link href={`/products/${product.id}`} className="flex flex-1 flex-col items-start">
+          <h2 className="line-clamp-2 text-base font-bold leading-tight text-gray-800 transition-colors group-hover:text-indigo-600 sm:text-lg">
             {product.name}
           </h2>
-          <p className="mt-1 text-xs text-gray-400">#{product.id}</p>
-        </div>
+        </Link>
 
-        {/* Role-based price */}
-        <div>
-          <p className="text-lg font-bold text-gray-900">${displayPrice.toFixed(2)}</p>
-          <p className="text-xs text-gray-400">{getPriceLabel(userRole)}</p>
-        </div>
+        {/* Price & Actions */}
+        <div className="mt-5 flex flex-col items-start justify-between gap-3">
+          <div>
+            <p className="font-sans text-2xl tracking-tight text-gray-800">
+              ${displayPrice.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </p>
+          </div>
 
-        {/* Actions */}
-        <div className="flex flex-col gap-2">
-          <Link
-            href={`/products/${product.id}`}
-            className="w-full rounded-xl border border-gray-200 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-900"
-          >
-            Ver detalle
-          </Link>
           <button
             onClick={handleAddToCart}
             disabled={product.stock === 0}
-            className="w-full rounded-xl bg-gray-900 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+            className="w-full items-center justify-center rounded-2xl border-2 border-emerald-500 px-3 py-2 text-sm font-bold text-emerald-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-emerald-500 hover:text-white hover:shadow-lg hover:shadow-emerald-200 active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:border-transparent disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none"
+            aria-label="Agregar al carrito"
           >
-            {product.stock === 0 ? "Sin stock" : "Agregar al carrito"}
+            {product.stock === 0 ? "Agotado" : "Al carrito"}
           </button>
         </div>
       </div>

@@ -49,7 +49,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+      <nav className="mx-auto flex w-[95%] items-center justify-between px-4 py-3">
         {/* Brand */}
         <Link
           href="/"
@@ -66,26 +66,26 @@ export default function Navbar() {
         </Link>
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 font-sans">
           <Link
             href="/"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+            className="rounded-lg px-3 py-1.5 text-md font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
           >
             Inicio
           </Link>
           <Link
             href="/products"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+            className="rounded-lg px-3 py-1.5 text-md font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
           >
             Tienda
           </Link>
 
           {/* Auth section */}
           {isAuthenticated && user ? (
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative font-sans" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-md font-medium text-gray-700 transition-colors hover:bg-gray-100"
                 aria-expanded={dropdownOpen}
                 aria-haspopup="true"
               >
@@ -97,7 +97,7 @@ export default function Navbar() {
                   {getDisplayName(user.firstName, user.lastName, user.email)}
                 </span>
                 <svg
-                  className={`h-4 w-4 text-gray-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                  className={`h-6 w-6 text-gray-400 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -109,7 +109,7 @@ export default function Navbar() {
 
               {/* Dropdown menu */}
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5">
+                <div className="font-sans absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5">
                   {/* User info header */}
                   <div className="border-b border-gray-100 px-4 py-2.5">
                     <p className="truncate text-xs font-semibold text-gray-900">
@@ -185,22 +185,7 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-          ) : (
-            <>
-              <Link
-                href="/auth/login"
-                className="rounded-lg bg-blue-400 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-blue-500"
-              >
-                Iniciar Sesión
-              </Link>
-              <Link
-                href="/auth/register"
-                className="rounded-lg bg-violet-400 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-violet-600"
-              >
-                Crear Cuenta
-              </Link>
-            </>
-          )}
+          ) : null}
 
           {/* Cart icon + badge only */}
           <CartSummary />

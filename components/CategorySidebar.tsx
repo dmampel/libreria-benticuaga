@@ -33,7 +33,7 @@ export default function CategorySidebar({ basePath = "/products" }: Props) {
   return (
     <aside className="w-64 shrink-0">
       <nav className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-        <p className="mb-3 px-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+        <p className="font-sans mb-3 px-2 text-lg font-semibold uppercase tracking-wider text-gray-400">
           Categorías
         </p>
         <ul className="space-y-0.5">
@@ -61,7 +61,7 @@ export default function CategorySidebar({ basePath = "/products" }: Props) {
                 <Link
                   href={`${basePath}?category=${cat.slug}`}
                   scroll={false}
-                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`font-sans flex items-center gap-2.5 rounded-xl px-3 py-2 text-md font-medium transition-colors ${
                     isActiveParent || isChildActive
                       ? "bg-blue-500 text-white"
                       : "text-gray-700 hover:bg-gray-100"
@@ -82,7 +82,7 @@ export default function CategorySidebar({ basePath = "/products" }: Props) {
                         <Link
                           href={`${basePath}?category=${child.slug}`}
                           scroll={false}
-                          className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
+                          className={`font-sans flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors ${
                             currentSlug === child.slug
                               ? "font-semibold text-blue-600 bg-blue-50"
                               : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"

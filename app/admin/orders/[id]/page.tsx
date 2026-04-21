@@ -31,6 +31,8 @@ interface Order {
   userRole: string
   paymentMethod: string | null
   transactionId: string | null
+  deliveryType: "DELIVERY" | "PICKUP"
+  branchName: string | null
   shippingAddress: string | null
   trackingNumber: string | null
   shippedAt: string | null
@@ -79,7 +81,6 @@ export default function AdminOrderDetailPage() {
   // Editable fields
   const [status, setStatus] = useState("")
   const [shippingAddress, setShippingAddress] = useState("")
-  const [trackingNumber, setTrackingNumber] = useState("")
   const [notes, setNotes] = useState("")
 
   useEffect(() => {
@@ -92,7 +93,6 @@ export default function AdminOrderDetailPage() {
           setOrder(o)
           setStatus(o.status)
           setShippingAddress(o.shippingAddress ?? "")
-          setTrackingNumber(o.trackingNumber ?? "")
           setNotes(o.notes ?? "")
         }
       })
@@ -127,7 +127,6 @@ export default function AdminOrderDetailPage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           shippingAddress: shippingAddress || null,
-          trackingNumber: trackingNumber || null,
           notes: notes || null,
         }),
       })
@@ -230,32 +229,32 @@ export default function AdminOrderDetailPage() {
 
           {/* Shipping */}
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-            <h2 className="mb-4 text-sm font-semibold text-gray-700">Envío</h2>
+            <div className="mb-4 flex items-center gap-3">
+              <h2 className="text-sm font-semibold text-gray-700">Entrega</h2>
+              <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${order.deliveryType === "DELIVERY" ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700"}`}>
+                {order.deliveryType === "DELIVERY" ? "🚚 Envío a domicilio" : "🏪 Retiro en sucursal"}
+              </span>
+            </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-medium text-gray-500">Dirección</label>
-                <input
-                  type="text"
-                  value={shippingAddress}
-                  onChange={(e) => setShippingAddress(e.target.value)}
-                  placeholder="Dirección de envío"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">N° de seguimiento</label>
-                <input
-                  type="text"
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                  placeholder="Tracking number"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
-                />
-              </div>
-              <div>
-                <p className="mb-1 text-xs font-medium text-gray-500">Fecha de envío</p>
-                <p className="text-sm text-gray-700">{formatDateTime(order.shippedAt)}</p>
-              </div>
+              {order.deliveryType === "PICKUP" ? (
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Sucursal de retiro</label>
+                  <p className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-800">
+                    {order.branchName ?? "Librería Benticuaga"}
+                  </p>
+                </div>
+              ) : (
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Dirección</label>
+                  <input
+                    type="text"
+                    value={shippingAddress}
+                    onChange={(e) => setShippingAddress(e.target.value)}
+                    placeholder="Dirección de envío"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none"
+                  />
+                </div>
+              )}
               <div>
                 <p className="mb-1 text-xs font-medium text-gray-500">Fecha de entrega</p>
                 <p className="text-sm text-gray-700">{formatDateTime(order.deliveredAt)}</p>
@@ -464,8 +463,8 @@ export default function AdminOrderDetailPage() {
                 <dd className="font-medium text-gray-800">
                   {order.paymentMethod === "MERCADO_PAGO"
                     ? "Mercado Pago"
-                    : order.paymentMethod === "WHATSAPP"
-                    ? "WhatsApp"
+                    : order.paymentMethod === "CASH"
+                    ? "Efectivo / Transferencia"
                     : "—"}
                 </dd>
               </div>

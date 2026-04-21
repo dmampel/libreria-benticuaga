@@ -63,23 +63,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const existing = await prisma.order.findUnique({
       where: { id },
-      select: { id: true, status: true, trackingNumber: true },
+      select: { id: true, status: true },
     })
     if (!existing) {
       return NextResponse.json({ success: false, error: "Pedido no encontrado" }, { status: 404 })
     }
 
-    const { status, shippingAddress, trackingNumber, notes } = body
+    const { status, shippingAddress, notes } = body
 
     const statusChanging = status !== undefined && status !== existing.status
-    const newTrackingNumber = trackingNumber ?? existing.trackingNumber
 
     const updated = await prisma.order.update({
       where: { id },
       data: {
         ...(status !== undefined && { status }),
         ...(shippingAddress !== undefined && { shippingAddress }),
-        ...(trackingNumber !== undefined && { trackingNumber }),
         ...(notes !== undefined && { notes }),
         ...(statusChanging && status === "SHIPPED" && { shippedAt: new Date() }),
         ...(statusChanging && status === "DELIVERED" && { deliveredAt: new Date() }),
@@ -111,7 +109,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             console.error("[Admin] Failed to send preparing email:", err)
           )
         } else if (status === "SHIPPED") {
-          sendOrderShippedEmail(emailData, newTrackingNumber ?? "").catch((err) =>
+          sendOrderShippedEmail(emailData, "").catch((err) =>
             console.error("[Admin] Failed to send shipped email:", err)
           )
         } else {
@@ -126,7 +124,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const changes: string[] = []
     if (status !== undefined && status !== existing.status) changes.push(`status: ${existing.status} → ${status}`)
     if (shippingAddress !== undefined) changes.push("shippingAddress updated")
-    if (trackingNumber !== undefined) changes.push("trackingNumber updated")
     if (statusChanging && status === "SHIPPED") changes.push("shippedAt set automatically")
     if (statusChanging && status === "DELIVERED") changes.push("deliveredAt set automatically")
     if (notes !== undefined) changes.push("notes updated")

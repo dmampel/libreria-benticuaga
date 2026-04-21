@@ -7,6 +7,7 @@ export interface OrderRow {
   id: string
   total: number
   status: string
+  deliveryType: "DELIVERY" | "PICKUP"
   createdAt: string
   user: { email: string; firstName: string | null; lastName: string | null } | null
   guestEmail: string | null
@@ -84,6 +85,7 @@ export function OrderTable({ orders }: { orders: OrderRow[] }) {
             <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
               <th className="px-6 py-3">ID</th>
               <th className="px-6 py-3">Cliente</th>
+              <th className="px-6 py-3">Entrega</th>
               <th
                 className="cursor-pointer px-6 py-3 hover:text-gray-600"
                 onClick={() => toggleSort("total")}
@@ -138,6 +140,17 @@ export function OrderTable({ orders }: { orders: OrderRow[] }) {
                         </span>
                       )
                     })()}
+                  </td>
+                  <td className="px-6 py-3">
+                    {order.deliveryType === "DELIVERY" ? (
+                      <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                        🚚 Envío
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700">
+                        🏪 Retiro
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-3 font-medium text-gray-900">{formatCurrency(order.total)}</td>
                   <td className="px-6 py-3">

@@ -1,6 +1,4 @@
 "use client";
-
-import React from "react";
 import TrustCard from "./TrustCard";
 
 const trustFeatures = [

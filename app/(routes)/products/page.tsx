@@ -59,12 +59,12 @@ export default async function ProductsPage({ searchParams }: Props) {
   return (
     <>
       {/* Full-width Hero */}
-      <Hero />
+      <Hero hideButtons />
 
       {/* Brands carousel */}
       <BrandsCarousel brands={brands} />
 
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto w-[95%] px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-8 sm:flex-row sm:items-start">
           {/* Category sidebar */}
           <div className="hidden sm:block sm:w-64 sm:shrink-0">

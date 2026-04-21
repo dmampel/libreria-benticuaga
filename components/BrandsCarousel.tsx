@@ -1,22 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { BrandData } from "@/lib/brands";
+import { getBrandColor } from "@/lib/brands";
 
 interface Props {
   brands: BrandData[];
 }
-
-// Colored palette for hover tooltip labels
-const LABEL_COLORS = [
-  "bg-pink-500",
-  "bg-violet-500",
-  "bg-emerald-500",
-  "bg-amber-500",
-  "bg-sky-500",
-  "bg-rose-500",
-  "bg-teal-500",
-  "bg-orange-500",
-];
 
 /**
  * BrandsCarousel — Horizontal scrollable row.
@@ -36,8 +25,8 @@ export default function BrandsCarousel({ brands }: Props) {
         {/* Scrollable track — hidden scrollbar */}
         <div className="scrollbar-hide overflow-x-auto px-4 pb-10 pt-2 sm:px-6 lg:px-8">
           <div className="flex w-max gap-5">
-            {brands.map((brand, idx) => {
-              const labelColor = LABEL_COLORS[idx % LABEL_COLORS.length];
+            {brands.map((brand) => {
+              const labelColor = getBrandColor(brand.name);
               return (
                 <Link
                   key={brand.id}

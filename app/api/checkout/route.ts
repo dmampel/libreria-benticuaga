@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sendNewOrderAdminNotification } from "@/lib/order-emails"
 import type { Role } from "@prisma/client"
 
 // ============ Types ============
@@ -81,6 +82,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.log(
       `[Checkout] Order created: ${order.id} | total: $${total.toFixed(2)} | role: ${userRole} | items: ${items.length}`
     )
+
+    sendNewOrderAdminNotification({
+      id: order.id,
+      total,
+      createdAt: order.createdAt,
+      shippingAddress: null,
+      trackingNumber: null,
+      items: items.map((i) => ({ quantity: i.quantity, price: i.unitPrice, product: { id: i.productId, name: i.name } })),
+      user: null,
+      guestName: null,
+      guestEmail: null,
+    }).catch((err) => console.error("[Checkout] Admin notification failed:", err))
 
     return NextResponse.json({ success: true, orderId: order.id })
   } catch (error) {

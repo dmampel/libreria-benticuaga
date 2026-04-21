@@ -3,7 +3,7 @@
 import { useState } from "react"
 import QuantitySelector from "@/components/QuantitySelector"
 import { useCart } from "@/lib/hooks/useCart"
-import { getPrice, getPriceLabel } from "@/lib/pricing"
+import { getPrice } from "@/lib/pricing"
 
 interface Product {
   id: string
@@ -35,14 +35,14 @@ export default function ProductActions({ product }: { product: Product }) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 font-sans">
       {/* Role-based price */}
       <div>
         <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-bold text-gray-900">${displayPrice.toFixed(2)}</span>
-          <span className="text-sm text-gray-400">por unidad</span>
+          <span className="text-4xl tracking-tight text-gray-800">
+            ${displayPrice.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </span>
         </div>
-        <p className="mt-0.5 text-xs text-gray-400">{getPriceLabel(userRole)}</p>
       </div>
 
       {/* Stock status */}
@@ -74,9 +74,9 @@ export default function ProductActions({ product }: { product: Product }) {
       <button
         onClick={handleAddToCart}
         disabled={outOfStock}
-        className="w-full rounded-xl bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 sm:w-auto"
+        className="w-auto md:w-[40%] items-center justify-center rounded-2xl border-2 border-emerald-500 px-8 py-3.5 text-sm font-bold text-emerald-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-emerald-500 hover:text-white hover:shadow-lg hover:shadow-emerald-200 active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:border-transparent disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none"
       >
-        {outOfStock ? "Sin stock" : "Agregar al carrito"}
+        {outOfStock ? "Agotado" : "Al carrito"}
       </button>
     </div>
   )

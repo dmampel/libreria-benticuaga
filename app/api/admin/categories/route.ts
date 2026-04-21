@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "No autorizado" }, { status: 401 })
     }
 
-    const { name, slug, icon, parentId } = await request.json()
+    const { name, slug, icon, image, parentId } = await request.json()
 
     if (!name?.trim()) return NextResponse.json({ success: false, error: "Nombre requerido" }, { status: 400 })
     if (!slug?.trim()) return NextResponse.json({ success: false, error: "Slug requerido" }, { status: 400 })
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     if (existing) return NextResponse.json({ success: false, error: "Ya existe una categoría con ese slug" }, { status: 409 })
 
     const category = await prisma.category.create({
-      data: { name: name.trim(), slug: slug.trim(), icon: icon?.trim() || null, parentId: parentId || null },
+      data: { name: name.trim(), slug: slug.trim(), icon: icon?.trim() || null, image: image?.trim() || null, parentId: parentId || null },
     })
 
     await prisma.activityLog.create({

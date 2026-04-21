@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { randomUUID } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { createPreference } from "@/lib/mercado-pago"
+import { verifyToken } from "@/lib/auth"
 import type { Role } from "@prisma/client"
 
 // ============ Types ============
@@ -20,7 +21,9 @@ interface RequestBody {
   guestEmail: string
   guestPhone: string
   guestName: string
-  guestAddress: string
+  guestAddress?: string
+  deliveryType: "DELIVERY" | "PICKUP"
+  branchName?: string
 }
 
 // ============ POST /api/checkout/mercado-pago ============
@@ -40,7 +43,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     const body = (await request.json()) as RequestBody
-    const { items, total, userRole, guestEmail, guestPhone, guestName, guestAddress } = body
+    const { items, total, userRole, guestEmail, guestPhone, guestName, guestAddress, deliveryType, branchName } = body
+
+    const token = request.cookies.get("auth_token")?.value || request.headers.get("authorization")?.replace("Bearer ", "")
+    const payload = token ? verifyToken(token) : null
+    const userId = payload?.id || null
 
     // ── Validation ──────────────────────────────────────────────
     if (!items || items.length === 0) {
@@ -91,14 +98,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const newOrder = await tx.order.create({
         data: {
           id: orderId,
+          userId,
           guestEmail,
           guestPhone,
           guestName,
-          shippingAddress: guestAddress,
+          shippingAddress: deliveryType === "DELIVERY" ? (guestAddress ?? null) : null,
+          deliveryType,
+          branchName: deliveryType === "PICKUP" ? (branchName ?? null) : null,
           total,
           userRole,
           status: "PENDING",
           paymentMethod: "MERCADO_PAGO",
+          paymentStatus: "PENDING",
         },
       })
 

@@ -9,6 +9,7 @@ interface Category {
   slug: string;
   icon: string | null;
   image: string | null;
+  parentId: string | null;
 }
 
 // Gradient palette for categories — cycles through if more than defined
@@ -36,7 +37,10 @@ export default function CategoryGrid() {
     fetch("/api/categories")
       .then((r) => r.json())
       .then((data) => {
-        if (data.success) setCategories(data.data);
+        if (data.success) {
+          const parentCats = data.data.filter((c: Category) => c.parentId === null);
+          setCategories(parentCats);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -76,16 +80,20 @@ export default function CategoryGrid() {
               {/* Background Layer: Image or Gradient */}
               {cat.image ? (
                 <>
-                  <img 
-                    src={cat.image} 
+                  <img
+                    src={cat.image}
                     alt={cat.name}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   {/* Overlay for readability */}
-                  <div className={`absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent transition-opacity duration-300 group-hover:opacity-80`} />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent transition-opacity duration-300 group-hover:opacity-80`}
+                  />
                 </>
               ) : (
-                <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-90 transition-opacity duration-300 group-hover:opacity-100`} />
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-90 transition-opacity duration-300 group-hover:opacity-100`}
+                />
               )}
 
               {/* Icon */}
@@ -94,7 +102,7 @@ export default function CategoryGrid() {
                   {cat.icon}
                 </span>
               )}
-              
+
               {/* Name */}
               <div className="relative z-10 w-full">
                 <span className="block text-lg font-black uppercase leading-tight tracking-wider text-white drop-shadow-md">

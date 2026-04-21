@@ -31,7 +31,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params
-    const { name, slug, icon, parentId } = await request.json()
+    const { name, slug, icon, image, parentId } = await request.json()
 
     if (!name?.trim()) return NextResponse.json({ success: false, error: "Nombre requerido" }, { status: 400 })
     if (!slug?.trim()) return NextResponse.json({ success: false, error: "Slug requerido" }, { status: 400 })
@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const category = await prisma.category.update({
       where: { id },
-      data: { name: name.trim(), slug: slug.trim(), icon: icon?.trim() || null, parentId: parentId || null },
+      data: { name: name.trim(), slug: slug.trim(), icon: icon?.trim() || null, image: image?.trim() || null, parentId: parentId || null },
     })
 
     await prisma.activityLog.create({

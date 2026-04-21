@@ -113,8 +113,11 @@ model Order {
   total           Float
   status          OrderStatus @default(PENDING)
   userRole        String      @default("RETAIL") // pricing tier at time of order
-  paymentMethod   String?     // "MERCADO_PAGO" | "WHATSAPP" | null
-  transactionId   String?     // MP payment ID when confirmed
+  paymentMethod   PaymentMethod?
+  paymentStatus   PaymentStatus  @default(PENDING)
+  transactionId   String?
+  deliveryType    DeliveryType   @default(DELIVERY)
+  branchName      String?
   // Guest checkout fields (when no userId)
   guestEmail      String?
   guestPhone      String?
@@ -153,6 +156,21 @@ enum OrderStatus {
   SHIPPED   // Order dispatched
   DELIVERED // Order received by customer
   CANCELLED // Cancelled by admin or system
+}
+
+enum DeliveryType {
+  DELIVERY
+  PICKUP
+}
+
+enum PaymentMethod {
+  MERCADO_PAGO
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
 }
 
 // ============ EMAIL PREFERENCES ============
