@@ -1,7 +1,20 @@
 "use client";
+import React from "react";
 import TrustCard from "./TrustCard";
 
-const trustFeatures = [
+const trustFeatures: {
+  title: string
+  description: string
+  icon: React.ReactNode
+  colorScheme: "emerald" | "blue" | "violet" | "amber"
+  rotation: string
+  badge?: string
+  badgeText?: string
+  hasWashiTape?: boolean
+  offset?: string
+  tapePosition?: "left" | "center" | "right"
+  pinPosition?: "left" | "center" | "right"
+}[] = [
   {
     title: "Devolución y Cambios Gratis",
     description:
