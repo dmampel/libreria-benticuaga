@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { generateEmailVerificationToken, sendVerificationEmail } from "@/lib/auth"
+import { rateLimit, getIp } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
+  const { allowed, retryAfter } = rateLimit(`resend-verification:${getIp(request)}`, { limit: 3, windowMs: 15 * 60 * 1000 })
+  if (!allowed) {
+    return NextResponse.json(
+      { success: false, error: "Demasiados intentos. Intentá de nuevo en unos minutos." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    )
+  }
+
   try {
     const { email } = await request.json()
 

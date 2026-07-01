@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { hashPassword, generateEmailVerificationToken, sendVerificationEmail } from "@/lib/auth"
+import { rateLimit, getIp } from "@/lib/rate-limit"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const CUIT_REGEX = /^\d{11}$/
 const VALID_ROLES = ["RETAIL", "WHOLESALE"] as const
 
 export async function POST(request: NextRequest) {
+  const { allowed, retryAfter } = rateLimit(`register:${getIp(request)}`, { limit: 5, windowMs: 15 * 60 * 1000 })
+  if (!allowed) {
+    return NextResponse.json(
+      { success: false, error: "Demasiados intentos. Intentá de nuevo en unos minutos." },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } }
+    )
+  }
+
   try {
     const body = await request.json()
     const { email, password, firstName, lastName, phone, address, role, cuit, razonSocial } = body
