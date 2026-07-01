@@ -74,7 +74,8 @@ model Product {
 model User {
   id          String        @id @default(uuid())
   email       String        @unique
-  password    String // bcrypt hash
+  password    String? // bcrypt hash; null for OAuth-only users
+  googleId    String?       @unique
   role        Role          @default(RETAIL)
   isAdmin     Boolean       @default(false)
   isActive    Boolean       @default(true)

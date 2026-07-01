@@ -31,6 +31,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!user.password) {
+      return NextResponse.json(
+        { success: false, error: "Esta cuenta usa Google para ingresar." },
+        { status: 401 }
+      )
+    }
+
     const passwordMatch = await verifyPassword(password, user.password)
     if (!passwordMatch) {
       return NextResponse.json(
