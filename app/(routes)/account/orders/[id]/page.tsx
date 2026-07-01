@@ -18,18 +18,172 @@ interface Order {
   status: string
   userRole: string
   paymentMethod: string | null
+  paymentStatus: string
   transactionId: string | null
+  deliveryType: string
+  shippingAddress: string | null
+  trackingNumber: string | null
+  branchName: string | null
+  notes: string | null
+  shippedAt: string | null
+  deliveredAt: string | null
   createdAt: string
   items: OrderItem[]
 }
 
+const STATUS_STEPS = [
+  { key: "PENDING",   label: "Pedido recibido" },
+  { key: "CONFIRMED", label: "Pago confirmado" },
+  { key: "PREPARING", label: "En preparación" },
+  { key: "SHIPPED",   label: "Enviado" },
+  { key: "DELIVERED", label: "Entregado" },
+]
+
+const STATUS_ORDER = ["PENDING", "CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED"]
+
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  PENDING: { label: "Pendiente", className: "bg-yellow-100 text-yellow-700" },
+  PENDING:   { label: "Pendiente",       className: "bg-yellow-100 text-yellow-700" },
   CONFIRMED: { label: "Pago confirmado", className: "bg-blue-100 text-blue-700" },
   PREPARING: { label: "En preparación", className: "bg-orange-100 text-orange-700" },
-  SHIPPED: { label: "Enviado", className: "bg-indigo-100 text-indigo-700" },
-  DELIVERED: { label: "Entregado", className: "bg-green-100 text-green-700" },
-  CANCELLED: { label: "Cancelado", className: "bg-gray-100 text-gray-500" },
+  SHIPPED:   { label: "Enviado",         className: "bg-indigo-100 text-indigo-700" },
+  DELIVERED: { label: "Entregado",       className: "bg-green-100 text-green-700" },
+  CANCELLED: { label: "Cancelado",       className: "bg-gray-100 text-gray-500" },
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("es-AR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+function StatusTimeline({ order }: { order: Order }) {
+  if (order.status === "CANCELLED") {
+    return (
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+          Estado del pedido
+        </h2>
+        <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
+            <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-700">Pedido cancelado</p>
+            <p className="text-xs text-gray-400">{formatDate(order.createdAt)}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const currentIndex = STATUS_ORDER.indexOf(order.status)
+
+  const stepDate = (key: string): string | null => {
+    if (key === "PENDING")   return order.createdAt
+    if (key === "SHIPPED")   return order.shippedAt
+    if (key === "DELIVERED") return order.deliveredAt
+    return null
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-gray-400">
+        Estado del pedido
+      </h2>
+      <ol className="relative space-y-0">
+        {STATUS_STEPS.map((step, index) => {
+          const isDone    = index < currentIndex
+          const isCurrent = index === currentIndex
+          const isPending = index > currentIndex
+          const date      = stepDate(step.key)
+          const isLast    = index === STATUS_STEPS.length - 1
+
+          return (
+            <li key={step.key} className="flex gap-4">
+              {/* Icon column */}
+              <div className="flex flex-col items-center">
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                  isDone    ? "border-green-500 bg-green-500" :
+                  isCurrent ? "border-indigo-600 bg-indigo-600" :
+                              "border-gray-200 bg-white"
+                }`}>
+                  {isDone ? (
+                    <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  ) : isCurrent ? (
+                    <div className="h-2.5 w-2.5 rounded-full bg-white" />
+                  ) : (
+                    <div className="h-2 w-2 rounded-full bg-gray-300" />
+                  )}
+                </div>
+                {!isLast && (
+                  <div className={`my-1 w-0.5 flex-1 ${isDone ? "bg-green-400" : "bg-gray-200"}`} style={{ minHeight: "28px" }} />
+                )}
+              </div>
+
+              {/* Text column */}
+              <div className={`pb-6 ${isLast ? "pb-0" : ""}`}>
+                <p className={`text-sm font-semibold ${
+                  isCurrent ? "text-indigo-700" :
+                  isDone    ? "text-gray-900" :
+                              "text-gray-400"
+                }`}>
+                  {step.label}
+                </p>
+                {date && (isDone || isCurrent) && (
+                  <p className="mt-0.5 text-xs text-gray-400">{formatDate(date)}</p>
+                )}
+                {isPending && (
+                  <p className="mt-0.5 text-xs text-gray-300">Pendiente</p>
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
+  )
+}
+
+function ShippingCard({ order }: { order: Order }) {
+  const isPickup = order.deliveryType === "PICKUP"
+
+  if (!order.shippingAddress && !order.branchName && !order.trackingNumber) return null
+
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+        {isPickup ? "Retiro en sucursal" : "Información de envío"}
+      </h2>
+      <dl className="space-y-3 text-sm">
+        {isPickup && order.branchName && (
+          <div>
+            <dt className="text-xs text-gray-500">Sucursal</dt>
+            <dd className="mt-0.5 font-medium text-gray-900">{order.branchName}</dd>
+          </div>
+        )}
+        {!isPickup && order.shippingAddress && (
+          <div>
+            <dt className="text-xs text-gray-500">Dirección</dt>
+            <dd className="mt-0.5 font-medium text-gray-900">{order.shippingAddress}</dd>
+          </div>
+        )}
+        {order.trackingNumber && (
+          <div>
+            <dt className="text-xs text-gray-500">Número de seguimiento</dt>
+            <dd className="mt-0.5 font-mono text-sm font-semibold text-indigo-700">{order.trackingNumber}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  )
 }
 
 export default function OrderDetailPage() {
@@ -44,11 +198,8 @@ export default function OrderDetailPage() {
     fetch(`/api/account/orders/${id}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.success) {
-          setOrder(data.data)
-        } else {
-          setError(data.error ?? "Pedido no encontrado")
-        }
+        if (data.success) setOrder(data.data)
+        else setError(data.error ?? "Pedido no encontrado")
       })
       .catch(() => setError("Error de conexión"))
       .finally(() => setLoading(false))
@@ -106,8 +257,13 @@ export default function OrderDetailPage() {
         </span>
       </div>
 
-      {/* Order details */}
       <div className="space-y-4">
+        {/* Status timeline */}
+        <StatusTimeline order={order} />
+
+        {/* Shipping info */}
+        <ShippingCard order={order} />
+
         {/* Items table */}
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
           <table className="w-full text-sm">
@@ -164,14 +320,6 @@ export default function OrderDetailPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-xs text-gray-500">Estado</dt>
-              <dd className="mt-0.5">
-                <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${status.className}`}>
-                  {status.label}
-                </span>
-              </dd>
-            </div>
-            <div>
               <dt className="text-xs text-gray-500">Método de pago</dt>
               <dd className="mt-0.5 font-medium text-gray-900">
                 {order.paymentMethod === "MERCADO_PAGO"
@@ -181,10 +329,22 @@ export default function OrderDetailPage() {
                   : "—"}
               </dd>
             </div>
+            <div>
+              <dt className="text-xs text-gray-500">Tipo de entrega</dt>
+              <dd className="mt-0.5 font-medium text-gray-900">
+                {order.deliveryType === "PICKUP" ? "Retiro en sucursal" : "Envío a domicilio"}
+              </dd>
+            </div>
             {order.transactionId && (
               <div className="col-span-2">
                 <dt className="text-xs text-gray-500">ID de transacción</dt>
                 <dd className="mt-0.5 font-mono text-xs text-gray-700">{order.transactionId}</dd>
+              </div>
+            )}
+            {order.notes && (
+              <div className="col-span-2">
+                <dt className="text-xs text-gray-500">Notas</dt>
+                <dd className="mt-0.5 text-gray-700">{order.notes}</dd>
               </div>
             )}
           </dl>
