@@ -87,9 +87,20 @@ export default function AdminBrandsPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Marcas</h1>
-        <p className="mt-1 text-sm text-gray-500">Creá, editá o eliminá marcas de productos.</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Marcas</h1>
+          <p className="mt-1 text-sm text-gray-500">Creá, editá o eliminá marcas de productos.</p>
+        </div>
+        <Link
+          href="/admin/brands/import"
+          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
+          Importar CSV
+        </Link>
       </div>
 
       {successMsg && (
