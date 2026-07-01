@@ -56,7 +56,7 @@ export function ProductForm({
   onDelete,
   saving,
 }: Props) {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [form, setForm] = useState<ProductFormData>({ ...empty, ...initial });
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -68,12 +68,12 @@ export function ProductForm({
       .then((r) => r.json())
       .then((d) => { if (d.success) setCategories(d.data) });
 
-    if (token) {
-      fetch("/api/admin/brands", { headers: { Authorization: `Bearer ${token}` } })
+    if (user) {
+      fetch("/api/admin/brands")
         .then((r) => r.json())
         .then((d) => { if (d.success) setBrands(d.data) });
     }
-  }, [token]);
+  }, [user]);
 
   function set(field: keyof ProductFormData) {
     return (

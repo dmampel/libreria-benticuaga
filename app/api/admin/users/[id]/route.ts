@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { requireAdmin } from "@/lib/admin-auth"
+import { requireAdminFromRequest } from "@/lib/admin-auth"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const token = request.headers.get("authorization")?.replace("Bearer ", "")
-    const auth = token ? requireAdmin(token) : { authorized: false }
+    const auth = requireAdminFromRequest(request)
     if (!auth.authorized) {
       return NextResponse.json({ success: false, error: "No autorizado" }, { status: 401 })
     }
@@ -48,8 +47,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const token = request.headers.get("authorization")?.replace("Bearer ", "")
-    const auth = token ? requireAdmin(token) : { authorized: false }
+    const auth = requireAdminFromRequest(request)
     if (!auth.authorized || !auth.userId) {
       return NextResponse.json({ success: false, error: "No autorizado" }, { status: 401 })
     }

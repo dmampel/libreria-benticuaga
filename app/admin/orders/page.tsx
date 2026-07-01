@@ -15,7 +15,7 @@ const STATUS_OPTIONS = [
 ]
 
 export default function AdminOrdersPage() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState("")
@@ -32,13 +32,13 @@ export default function AdminOrdersPage() {
   }
 
   useEffect(() => {
-    if (!token) return
+    if (!user) return
     setLoading(true)
-    fetch(buildUrl(), { headers: { Authorization: `Bearer ${token}` } })
+    fetch(buildUrl())
       .then((r) => r.json())
       .then((data) => { if (data.success) setOrders(data.data) })
       .finally(() => setLoading(false))
-  }, [token, status, from, to]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, status, from, to]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="p-8">

@@ -12,7 +12,7 @@ interface ImportSummary {
 }
 
 export default function AdminProductImportPage() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const fileRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -20,7 +20,7 @@ export default function AdminProductImportPage() {
   const [error, setError] = useState("")
 
   async function handleImport() {
-    if (!file || !token) return
+    if (!file || !user) return
     setLoading(true)
     setError("")
     setSummary(null)
@@ -29,7 +29,6 @@ export default function AdminProductImportPage() {
       formData.append("file", file)
       const res = await fetch("/api/admin/products/import", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       })
       const data = await res.json()

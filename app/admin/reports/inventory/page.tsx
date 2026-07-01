@@ -34,19 +34,17 @@ interface InventoryData {
 
 export default function InventoryReportPage() {
   const router = useRouter()
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [data, setData] = useState<InventoryData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) return
-    fetch("/api/admin/stats/inventory", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    if (!user) return
+    fetch("/api/admin/stats/inventory")
       .then((r) => r.json())
       .then((d) => { if (d.success) setData(d.data) })
       .finally(() => setLoading(false))
-  }, [token])
+  }, [user])
 
   if (loading && !data) {
     return (

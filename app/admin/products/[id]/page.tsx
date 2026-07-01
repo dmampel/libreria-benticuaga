@@ -9,7 +9,7 @@ import { ProductForm, type ProductFormData } from "@/components/admin/ProductFor
 export default function AdminEditProductPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { token } = useAuth()
+  const { user } = useAuth()
 
   const [initial, setInitial] = useState<Partial<ProductFormData> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -17,8 +17,8 @@ export default function AdminEditProductPage() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    if (!token || !id) return
-    fetch(`/api/admin/products/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!user || !id) return
+    fetch(`/api/admin/products/${id}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
@@ -39,15 +39,15 @@ export default function AdminEditProductPage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [token, id])
+  }, [user, id])
 
   async function handleSubmit(data: ProductFormData) {
-    if (!token) return { error: "No autorizado" }
+    if (!user) return { error: "No autorizado" }
     setSaving(true)
     try {
       const res = await fetch(`/api/admin/products/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: data.name,
           description: data.description,
@@ -69,10 +69,9 @@ export default function AdminEditProductPage() {
   }
 
   async function handleDelete() {
-    if (!token) return
+    if (!user) return
     const res = await fetch(`/api/admin/products/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
     })
     const data = await res.json()
     if (data.success) {

@@ -30,7 +30,7 @@ export default async function Hero({ hideButtons = false }: { hideButtons?: bool
       />
 
       {/* Center content: logo + buttons */}
-      <div className="flex flex-col items-center gap-5 px-4 py-6 my-3">
+      <div className="flex flex-col items-center gap-5 px-4 py-6">
         {!userName ? (
           <p className="md:text-2xl text-lg text-center font-light text-gray-600">
             ¡Bienvenido a nuestra nueva tienda online!

@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { requireAdmin } from "@/lib/admin-auth"
+import { requireAdminFromRequest } from "@/lib/admin-auth"
 import { sendOrderPreparingEmail, sendOrderShippedEmail, sendOrderDeliveredEmail } from "@/lib/order-emails"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const token = request.headers.get("authorization")?.replace("Bearer ", "")
-    const auth = token ? requireAdmin(token) : { authorized: false }
+    const auth = requireAdminFromRequest(request)
     if (!auth.authorized) {
       return NextResponse.json({ success: false, error: "No autorizado" }, { status: 401 })
     }
@@ -52,8 +51,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const token = request.headers.get("authorization")?.replace("Bearer ", "")
-    const auth = token ? requireAdmin(token) : { authorized: false }
+    const auth = requireAdminFromRequest(request)
     if (!auth.authorized || !auth.userId) {
       return NextResponse.json({ success: false, error: "No autorizado" }, { status: 401 })
     }
@@ -85,12 +83,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       },
     })
 
-    // Send status emails after update (fire-and-forget)
+    // Send status emails and trigger n8n webhooks after update (fire-and-forget)
     if (statusChanging && (status === "PREPARING" || status === "SHIPPED" || status === "DELIVERED")) {
       const fullOrder = await prisma.order.findUnique({
         where: { id },
         include: {
-          user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          user: { select: { id: true, email: true, firstName: true, lastName: true, phone: true } },
           items: { include: { product: { select: { id: true, name: true } } } },
         },
       })
@@ -116,6 +114,35 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           sendOrderDeliveredEmail(emailData).catch((err) =>
             console.error("[Admin] Failed to send delivered email:", err)
           )
+
+          // Notify n8n to trigger post-purchase review flow (Flow 3)
+          const n8nWebhookUrl = process.env.N8N_DELIVERED_WEBHOOK_URL
+          if (n8nWebhookUrl) {
+            const phone = fullOrder.user?.phone ?? fullOrder.guestPhone ?? null
+            const customerName =
+              fullOrder.user
+                ? `${fullOrder.user.firstName ?? ""} ${fullOrder.user.lastName ?? ""}`.trim()
+                : (fullOrder.guestName ?? null)
+
+            fetch(n8nWebhookUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: fullOrder.id,
+                deliveredAt: new Date().toISOString(),
+                customer: {
+                  name: customerName || null,
+                  phone,
+                  email: recipientEmail,
+                },
+                items: fullOrder.items.map((item) => ({
+                  productId: item.product.id,
+                  name: item.product.name,
+                  quantity: item.quantity,
+                })),
+              }),
+            }).catch((err) => console.error("[Admin] Failed to notify n8n:", err))
+          }
         }
       }
     }

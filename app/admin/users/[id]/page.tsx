@@ -27,7 +27,7 @@ import { STATUS_LABELS, STATUS_COLORS } from "@/lib/constants"
 export default function UserDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const { token } = useAuth()
+  const { user: authUser } = useAuth()
   const id = params.id as string
 
   const [user, setUser] = useState<UserDetail | null>(null)
@@ -45,28 +45,23 @@ export default function UserDetailPage() {
   }
 
   useEffect(() => {
-    if (!token) return
-    fetch(`/api/admin/users/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    if (!authUser) return
+    fetch(`/api/admin/users/${id}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.success) setUser(d.data)
         else setError(d.error)
       })
       .finally(() => setLoading(false))
-  }, [id, token])
+  }, [id, authUser])
 
   async function handleToggleAdmin() {
-    if (!token || !user) return
+    if (!authUser || !user) return
     setSaving(true)
     setError("")
     const res = await fetch(`/api/admin/users/${id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isAdmin: !user.isAdmin }),
     })
     const data = await res.json()
@@ -81,15 +76,12 @@ export default function UserDetailPage() {
   }
 
   async function handleToggleActive() {
-    if (!token || !user) return
+    if (!authUser || !user) return
     setSaving(true)
     setError("")
     const res = await fetch(`/api/admin/users/${id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isActive: !user.isActive }),
     })
     const data = await res.json()
@@ -104,15 +96,12 @@ export default function UserDetailPage() {
   }
 
   async function handleRoleChange() {
-    if (!token || !user || !confirmRole) return
+    if (!authUser || !user || !confirmRole) return
     setSaving(true)
     setError("")
     const res = await fetch(`/api/admin/users/${id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role: confirmRole }),
     })
     const data = await res.json()

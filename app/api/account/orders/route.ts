@@ -4,7 +4,7 @@ import { verifyToken } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get("authorization")?.replace("Bearer ", "")
+    const token = request.cookies.get("auth_token")?.value
     const payload = token ? verifyToken(token) : null
     if (!payload) {
       return NextResponse.json({ success: false, error: "No autorizado" }, { status: 401 })

@@ -15,7 +15,7 @@ const STOCK_OPTIONS = [
 ]
 
 export default function AdminProductsPage() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [products, setProducts] = useState<ProductRow[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,13 +38,13 @@ export default function AdminProductsPage() {
   }, [])
 
   useEffect(() => {
-    if (!token) return
+    if (!user) return
     setLoading(true)
-    fetch(buildUrl(), { headers: { Authorization: `Bearer ${token}` } })
+    fetch(buildUrl())
       .then((r) => r.json())
       .then((d) => { if (d.success) setProducts(d.data) })
       .finally(() => setLoading(false))
-  }, [token, categoryFilter, stockFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, categoryFilter, stockFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleStockUpdated(id: string, newStock: number) {
     setProducts((prev) => prev.map((p) => p.id === id ? { ...p, stock: newStock } : p))

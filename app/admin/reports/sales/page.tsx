@@ -31,7 +31,7 @@ function formatDate(s: string) {
 }
 
 export default function SalesReportPage() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [data, setData] = useState<DataPoint[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -44,12 +44,10 @@ export default function SalesReportPage() {
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10))
 
   const load = useCallback(() => {
-    if (!token) return
+    if (!user) return
     setLoading(true)
     const params = new URLSearchParams({ period, from, to })
-    fetch(`/api/admin/stats/sales?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch(`/api/admin/stats/sales?${params}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.success) {
@@ -58,7 +56,7 @@ export default function SalesReportPage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [token, period, from, to])
+  }, [user, period, from, to])
 
   useEffect(() => { load() }, [load])
 

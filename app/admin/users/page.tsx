@@ -23,7 +23,7 @@ interface Meta {
 
 export default function AdminUsersPage() {
   const router = useRouter()
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [meta, setMeta] = useState<Meta | null>(null)
   const [loading, setLoading] = useState(true)
@@ -42,7 +42,7 @@ export default function AdminUsersPage() {
   }
 
   useEffect(() => {
-    if (!token) return
+    if (!user) return
     setLoading(true)
     const params = new URLSearchParams()
     if (search) params.set("search", search)
@@ -51,9 +51,7 @@ export default function AdminUsersPage() {
     if (activeFilter) params.set("isActive", activeFilter)
     params.set("page", page.toString())
 
-    fetch(`/api/admin/users?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch(`/api/admin/users?${params}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.success) {
@@ -62,17 +60,14 @@ export default function AdminUsersPage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [token, search, roleFilter, adminFilter, activeFilter, page])
+  }, [user, search, roleFilter, adminFilter, activeFilter, page])
 
   async function handleToggleAdmin(id: string, newValue: boolean) {
-    if (!token) return
+    if (!user) return
     setTogglingId(id)
     const res = await fetch(`/api/admin/users/${id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isAdmin: newValue }),
     })
     const data = await res.json()

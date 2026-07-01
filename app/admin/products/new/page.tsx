@@ -8,16 +8,16 @@ import { ProductForm, type ProductFormData } from "@/components/admin/ProductFor
 
 export default function AdminNewProductPage() {
   const router = useRouter()
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [saving, setSaving] = useState(false)
 
   async function handleSubmit(data: ProductFormData) {
-    if (!token) return { error: "No autorizado" }
+    if (!user) return { error: "No autorizado" }
     setSaving(true)
     try {
       const res = await fetch("/api/admin/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: data.id,
           name: data.name,

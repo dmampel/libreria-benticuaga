@@ -51,7 +51,7 @@ function guessIcon(name: string) {
 }
 
 export default function AdminCategoriesPage() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -74,9 +74,9 @@ export default function AdminCategoriesPage() {
   }
 
   function loadCategories() {
-    if (!token) return
+    if (!user) return
     setLoading(true)
-    fetch("/api/admin/categories", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/admin/categories")
       .then((r) => r.json())
       .then((d) => { if (d.success) setCategories(d.data) })
       .finally(() => setLoading(false))
@@ -84,14 +84,13 @@ export default function AdminCategoriesPage() {
 
   useEffect(() => {
     loadCategories()
-  }, [token])
+  }, [user])
 
   async function handleDelete(id: string) {
-    if (!token) return
+    if (!user) return
     setGlobalError("")
     const res = await fetch(`/api/admin/categories/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
     })
     const data = await res.json()
     if (data.success) {
@@ -134,19 +133,16 @@ export default function AdminCategoriesPage() {
 
   async function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!token) return
+    if (!user) return
     setSaving(true)
     setFormError("")
 
     const isNew = !form.id
     const url = isNew ? "/api/admin/categories" : `/api/admin/categories/${form.id}`
-    
+
     const res = await fetch(url, {
       method: isNew ? "POST" : "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: form.name.trim(),
         slug: form.slug.trim(),

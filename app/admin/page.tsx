@@ -86,21 +86,19 @@ function timeAgo(iso: string) {
 }
 
 export default function AdminDashboardPage() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) return
-    fetch("/api/admin/stats", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    if (!user) return
+    fetch("/api/admin/stats")
       .then((r) => r.json())
       .then((data) => {
         if (data.success) setStats(data.data)
       })
       .finally(() => setLoading(false))
-  }, [token])
+  }, [user])
 
   if (loading) {
     return (

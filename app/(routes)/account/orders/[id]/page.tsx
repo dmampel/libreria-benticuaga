@@ -34,16 +34,14 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!token || !id) return
-    fetch(`/api/account/orders/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    if (!user || !id) return
+    fetch(`/api/account/orders/${id}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
@@ -54,7 +52,7 @@ export default function OrderDetailPage() {
       })
       .catch(() => setError("Error de conexión"))
       .finally(() => setLoading(false))
-  }, [token, id])
+  }, [user, id])
 
   if (loading) {
     return (

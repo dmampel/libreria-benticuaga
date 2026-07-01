@@ -30,21 +30,19 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
 }
 
 export default function OrdersPage() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) return
-    fetch("/api/account/orders", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    if (!user) return
+    fetch("/api/account/orders")
       .then((r) => r.json())
       .then((data) => {
         if (data.success) setOrders(data.data)
       })
       .finally(() => setLoading(false))
-  }, [token])
+  }, [user])
 
   if (loading) {
     return (

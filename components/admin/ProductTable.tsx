@@ -37,7 +37,7 @@ interface Props {
 
 export function ProductTable({ products, onStockUpdated, onDeleted }: Props) {
   const router = useRouter()
-  const { token } = useAuth()
+  const { user } = useAuth()
 
   const [sortKey, setSortKey] = useState<SortKey>("name")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
@@ -88,10 +88,9 @@ export function ProductTable({ products, onStockUpdated, onDeleted }: Props) {
   }
 
   async function patchStock(id: string, stock: number) {
-    if (!token) return
     const res = await fetch(`/api/admin/products/${id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stock }),
     })
     const data = await res.json()
@@ -106,7 +105,7 @@ export function ProductTable({ products, onStockUpdated, onDeleted }: Props) {
   }
 
   async function handleBulkStockUpdate() {
-    if (!bulkStock || !token || selected.size === 0) return
+    if (!bulkStock || !user || selected.size === 0) return
     const val = parseInt(bulkStock, 10)
     if (isNaN(val) || val < 0) return
     setBulkLoading(true)
@@ -117,7 +116,7 @@ export function ProductTable({ products, onStockUpdated, onDeleted }: Props) {
   }
 
   async function handleBulkDelete() {
-    if (!token || selected.size === 0) return
+    if (!user || selected.size === 0) return
     const confirmed = window.confirm(`¿Eliminar ${selected.size} producto(s)? Esta acción no se puede deshacer.`)
     if (!confirmed) return
     setBulkLoading(true)
@@ -126,7 +125,6 @@ export function ProductTable({ products, onStockUpdated, onDeleted }: Props) {
       ids.map((id) =>
         fetch(`/api/admin/products/${id}`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
         }).then((r) => r.json())
       )
     )

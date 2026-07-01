@@ -12,7 +12,7 @@ interface Brand {
 }
 
 export default function AdminBrandsPage() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [brands, setBrands] = useState<Brand[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -33,9 +33,9 @@ export default function AdminBrandsPage() {
   }
 
   function loadBrands() {
-    if (!token) return
+    if (!user) return
     setLoading(true)
-    fetch("/api/admin/brands", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/admin/brands")
       .then((r) => r.json())
       .then((d) => { if (d.success) setBrands(d.data) })
       .finally(() => setLoading(false))
@@ -43,17 +43,17 @@ export default function AdminBrandsPage() {
 
   useEffect(() => {
     loadBrands()
-  }, [token])
+  }, [user])
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!token) return
+    if (!user) return
     setSaving(true)
     setFormError("")
 
     const res = await fetch("/api/admin/brands", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name.trim(), image: image.trim() || null }),
     })
     const data = await res.json()
@@ -70,11 +70,10 @@ export default function AdminBrandsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!token) return
+    if (!user) return
     setGlobalError("")
     const res = await fetch(`/api/admin/brands/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
     })
     const data = await res.json()
     if (data.success) {

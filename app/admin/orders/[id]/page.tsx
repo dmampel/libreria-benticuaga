@@ -71,7 +71,7 @@ function formatDateTime(iso: string | null) {
 export default function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const { token } = useAuth()
+  const { user } = useAuth()
   const detailsRef = useRef<HTMLDetailsElement>(null)
 
   const [order, setOrder] = useState<Order | null>(null)
@@ -84,8 +84,8 @@ export default function AdminOrderDetailPage() {
   const [notes, setNotes] = useState("")
 
   useEffect(() => {
-    if (!token || !id) return
-    fetch(`/api/admin/orders/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    if (!user || !id) return
+    fetch(`/api/admin/orders/${id}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
@@ -97,15 +97,15 @@ export default function AdminOrderDetailPage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [token, id])
+  }, [user, id])
 
   async function handleQuickAction(nextStatus: string) {
-    if (!token) return
+    if (!user) return
     setSaving(true)
     try {
       const res = await fetch(`/api/admin/orders/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStatus }),
       })
       const data = await res.json()
@@ -119,12 +119,12 @@ export default function AdminOrderDetailPage() {
   }
 
   async function handleSave() {
-    if (!token) return
+    if (!user) return
     setSaving(true)
     try {
       const res = await fetch(`/api/admin/orders/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shippingAddress: shippingAddress || null,
           notes: notes || null,

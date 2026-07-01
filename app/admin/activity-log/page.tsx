@@ -35,7 +35,7 @@ function parseDetails(details: string | null): string {
 }
 
 export default function ActivityLogPage() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [entries, setEntries] = useState<LogEntry[]>([])
   const [meta, setMeta] = useState<Meta | null>(null)
   const [loading, setLoading] = useState(true)
@@ -45,16 +45,14 @@ export default function ActivityLogPage() {
   const [to, setTo] = useState("")
 
   const load = useCallback(() => {
-    if (!token) return
+    if (!user) return
     setLoading(true)
     const params = new URLSearchParams({ page: page.toString() })
     if (actionFilter) params.set("action", actionFilter)
     if (from) params.set("from", from)
     if (to) params.set("to", to)
 
-    fetch(`/api/admin/activity-log?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch(`/api/admin/activity-log?${params}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.success) {
@@ -63,7 +61,7 @@ export default function ActivityLogPage() {
         }
       })
       .finally(() => setLoading(false))
-  }, [token, page, actionFilter, from, to])
+  }, [user, page, actionFilter, from, to])
 
   useEffect(() => { load() }, [load])
 

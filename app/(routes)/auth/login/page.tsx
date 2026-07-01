@@ -48,7 +48,7 @@ function LoginForm() {
         return
       }
 
-      login(data.data.token)
+      login(data.data)
       router.push(data.data.isAdmin ? "/admin" : "/products")
     } catch {
       setError("Error de conexión. Intentá de nuevo.")
