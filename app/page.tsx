@@ -4,7 +4,7 @@ import CategoryGrid from "@/components/CategoryGrid";
 import { getAllBrands } from "@/lib/brands";
 import TrustSection from "@/components/TrustSection";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const brands = await getAllBrands();

@@ -7,16 +7,20 @@ import Hero from "@/components/Hero";
 import BrandsCarousel from "@/components/BrandsCarousel";
 import SearchBar from "@/components/SearchBar";
 import { getAllBrands } from "@/lib/brands";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 48;
+
 interface Props {
-  searchParams: Promise<{ category?: string; brand?: string; q?: string }>;
+  searchParams: Promise<{ category?: string; brand?: string; q?: string; page?: string }>;
 }
 
 export default async function ProductsPage({ searchParams }: Props) {
-  const { category, brand, q: qRaw } = await searchParams;
+  const { category, brand, q: qRaw, page: pageRaw } = await searchParams;
   const q = normalizeText(qRaw);
+  const page = Math.max(1, parseInt(pageRaw ?? "1", 10) || 1);
 
   let categoryFilter = {};
   if (category) {
@@ -30,31 +34,48 @@ export default async function ProductsPage({ searchParams }: Props) {
     }
   }
 
-  const [products, brands] = await Promise.all([
+  const where = {
+    ...categoryFilter,
+    ...(brand ? { brandId: brand } : {}),
+    ...(q
+      ? {
+          OR: [
+            { searchName: { contains: q, mode: "insensitive" as const } },
+            { searchDescription: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const [products, total, brands] = await Promise.all([
     prisma.product.findMany({
-      where: {
-        ...categoryFilter,
-        ...(brand ? { brandId: brand } : {}),
-        ...(q
-          ? {
-              OR: [
-                { searchName: { contains: q, mode: "insensitive" } },
-                { searchDescription: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
+      where,
       orderBy: { name: "asc" },
       include: { category: true, brand: true },
+      take: PAGE_SIZE,
+      skip: (page - 1) * PAGE_SIZE,
     }),
+    prisma.product.count({ where }),
     getAllBrands(),
   ]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const title = brand
     ? (products[0]?.brand?.name ?? "Marca")
     : category
       ? (products[0]?.category?.name ?? "Categoría")
       : "Productos";
+
+  function buildPageUrl(p: number) {
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (brand) params.set("brand", brand);
+    if (qRaw) params.set("q", qRaw);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return `/products${qs ? `?${qs}` : ""}`;
+  }
 
   return (
     <>
@@ -88,10 +109,9 @@ export default async function ProductsPage({ searchParams }: Props) {
                 {title}
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                {products.length}{" "}
-                {products.length === 1
-                  ? "producto disponible"
-                  : "productos disponibles"}
+                {total}{" "}
+                {total === 1 ? "producto disponible" : "productos disponibles"}
+                {totalPages > 1 && ` · Página ${page} de ${totalPages}`}
               </p>
             </div>
 
@@ -126,6 +146,54 @@ export default async function ProductsPage({ searchParams }: Props) {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-10 flex items-center justify-center gap-2">
+                {page > 1 && (
+                  <Link
+                    href={buildPageUrl(page - 1)}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-indigo-300 hover:text-indigo-600"
+                  >
+                    ←
+                  </Link>
+                )}
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                  .reduce<(number | "…")[]>((acc, p, i, arr) => {
+                    if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("…");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "…" ? (
+                      <span key={`ellipsis-${i}`} className="px-1 text-gray-400">…</span>
+                    ) : (
+                      <Link
+                        key={p}
+                        href={buildPageUrl(p as number)}
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-medium transition-colors ${
+                          p === page
+                            ? "bg-indigo-600 text-white shadow-sm"
+                            : "border border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
+                        }`}
+                      >
+                        {p}
+                      </Link>
+                    )
+                  )}
+
+                {page < totalPages && (
+                  <Link
+                    href={buildPageUrl(page + 1)}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 text-sm font-medium text-gray-600 transition-colors hover:border-indigo-300 hover:text-indigo-600"
+                  >
+                    →
+                  </Link>
+                )}
+              </div>
             )}
           </div>
         </div>
