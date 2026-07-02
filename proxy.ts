@@ -1,32 +1,41 @@
 import { NextRequest, NextResponse } from "next/server"
+import { jwtVerify, type JWTPayload } from "jose"
 
 const TOKEN_KEY = "auth_token"
 
-interface DecodedToken {
-  id?: string
-  email?: string
-  isAdmin?: boolean
+interface VerifiedTokenPayload {
+  id: string
+  email: string
+  isAdmin: boolean
   exp?: number
 }
 
-function decodeToken(token: string): DecodedToken | null {
+function isVerifiedTokenPayload(payload: JWTPayload): payload is JWTPayload & VerifiedTokenPayload {
+  return typeof payload.id === "string" && typeof payload.email === "string"
+}
+
+async function verifyAuthToken(token: string): Promise<VerifiedTokenPayload | null> {
+  const secret = process.env.JWT_SECRET
+  if (!secret) return null
+
   try {
-    const base64 = token.split(".")[1]
-    if (!base64) return null
-    const padded = base64.replace(/-/g, "+").replace(/_/g, "/")
-    return JSON.parse(Buffer.from(padded, "base64").toString("utf8")) as DecodedToken
+    const encodedSecret = new TextEncoder().encode(secret)
+    const { payload } = await jwtVerify(token, encodedSecret, { algorithms: ["HS256"] })
+
+    if (!isVerifiedTokenPayload(payload)) return null
+
+    return {
+      id: payload.id,
+      email: payload.email,
+      isAdmin: Boolean(payload.isAdmin),
+      exp: payload.exp,
+    }
   } catch {
     return null
   }
 }
 
-function isTokenValid(decoded: DecodedToken): boolean {
-  if (!decoded.id || !decoded.email) return false
-  if (decoded.exp && decoded.exp * 1000 < Date.now()) return false
-  return true
-}
-
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get(TOKEN_KEY)?.value
 
@@ -38,14 +47,14 @@ export function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    const decoded = decodeToken(token)
-    if (!decoded || !isTokenValid(decoded)) {
+    const verified = await verifyAuthToken(token)
+    if (!verified) {
       const loginUrl = new URL("/auth/login", request.url)
       loginUrl.searchParams.set("from", pathname)
       return NextResponse.redirect(loginUrl)
     }
 
-    if (!decoded.isAdmin) {
+    if (!verified.isAdmin) {
       return NextResponse.redirect(new URL("/products", request.url))
     }
 
@@ -59,8 +68,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  const decoded = decodeToken(token)
-  if (!decoded || !isTokenValid(decoded)) {
+  const verified = await verifyAuthToken(token)
+  if (!verified) {
     const loginUrl = new URL("/auth/login", request.url)
     loginUrl.searchParams.set("from", pathname)
     return NextResponse.redirect(loginUrl)
