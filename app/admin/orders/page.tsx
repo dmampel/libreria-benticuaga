@@ -21,31 +21,45 @@ export default function AdminOrdersPage() {
   const [status, setStatus] = useState("")
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
 
   function buildUrl() {
     const params = new URLSearchParams()
     if (status) params.set("status", status)
     if (from) params.set("from", from)
     if (to) params.set("to", to)
+    params.set("page", String(page))
     const qs = params.toString()
     return `/api/admin/orders${qs ? `?${qs}` : ""}`
   }
+
+  useEffect(() => {
+    setPage(1)
+  }, [status, from, to])
 
   useEffect(() => {
     if (!user) return
     setLoading(true)
     fetch(buildUrl())
       .then((r) => r.json())
-      .then((data) => { if (data.success) setOrders(data.data) })
+      .then((data) => {
+        if (data.success) {
+          setOrders(data.data)
+          setTotal(data.meta?.total ?? data.data.length)
+          setTotalPages(data.meta?.totalPages ?? 1)
+        }
+      })
       .finally(() => setLoading(false))
-  }, [user, status, from, to]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, status, from, to, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Pedidos</h1>
         <p className="mt-1 text-sm text-gray-500">
-          {loading ? "Cargando…" : `${orders.length} ${orders.length === 1 ? "pedido" : "pedidos"}`}
+          {loading ? "Cargando…" : `${total} ${total === 1 ? "pedido" : "pedidos"}`}
         </p>
       </div>
 
@@ -96,7 +110,28 @@ export default function AdminOrdersPage() {
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600" />
         </div>
       ) : (
-        <OrderTable orders={orders} />
+        <>
+          <OrderTable orders={orders} />
+          <div className="mt-4 flex items-center justify-end gap-3">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Anterior
+            </button>
+            <span className="text-sm text-gray-500">
+              Página {page} de {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Siguiente
+            </button>
+          </div>
+        </>
       )}
     </div>
   )

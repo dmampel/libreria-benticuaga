@@ -135,6 +135,9 @@ model Order {
   updatedAt       DateTime    @updatedAt
 
   @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([status, createdAt])
 }
 
 // ============ ACTIVITY LOG ============
