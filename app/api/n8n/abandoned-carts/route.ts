@@ -8,16 +8,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const hoursThreshold = Number(request.nextUrl.searchParams.get("hours") ?? "24")
-    const cutoff = new Date(Date.now() - hoursThreshold * 60 * 60 * 1000)
-    // Window of 48h to avoid re-notifying carts already processed
-    const windowStart = new Date(Date.now() - 48 * 60 * 60 * 1000)
+    const stage = request.nextUrl.searchParams.get("stage") === "whatsapp" ? "whatsapp" : "email"
+    const type = stage === "whatsapp" ? "ABANDONED_CART_WHATSAPP" : "ABANDONED_CART_EMAIL"
+    const hours = (h: number) => new Date(Date.now() - h * 60 * 60 * 1000)
+    // email: inactive 24-48h. whatsapp: inactive 48h-7d (cap so old carts are not pestered forever)
+    const [newest, oldest] = stage === "whatsapp" ? [hours(48), hours(168)] : [hours(24), hours(48)]
+    const cutoff = hours(24)
 
-    const carts = await prisma.cart.findMany({
+    const candidates = await prisma.cart.findMany({
       where: {
-        updatedAt: { lte: cutoff, gte: windowStart },
+        updatedAt: { lte: newest, gte: oldest },
         items: { some: {} },
         user: {
+          ...(stage === "whatsapp" && { phone: { not: null } }),
           orders: {
             none: {
               status: { in: ["CONFIRMED", "PREPARING", "SHIPPED", "DELIVERED"] },
@@ -53,6 +56,17 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    // Skip carts already notified for this stage since their last update
+    const sent = await prisma.sentEmail.findMany({
+      where: { type, success: true, userId: { in: candidates.map((c) => c.userId) } },
+      select: { userId: true, createdAt: true },
+    })
+    const carts = candidates.filter(
+      (c) => !sent.some((e) => e.userId === c.userId && e.createdAt >= c.updatedAt)
+    )
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001"
+
     const data = carts.map((cart) => {
       const isWholesale = cart.user.role === "WHOLESALE"
       const items = cart.items.map((item) => ({
@@ -75,6 +89,7 @@ export async function GET(request: NextRequest) {
         },
         items,
         total,
+        cartUrl: `${baseUrl}/cart`,
       }
     })
 
