@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { requireAdminFromRequest } from "@/lib/admin-auth"
+import { requireN8nAuth } from "@/lib/n8n-auth"
 import { parseCsv, type ParsedProduct } from "@/lib/csv-parser"
 
 // Max rows per batched DB statement. Keeps bind parameters (6 cols x rows)
@@ -21,8 +22,10 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 export async function POST(request: NextRequest) {
   try {
+    // Admin panel (cookie) or n8n Flow 6 (x-n8n-api-key, CSV sent by WhatsApp)
     const auth = requireAdminFromRequest(request)
-    if (!auth.authorized || !auth.userId) {
+    const viaN8n = requireN8nAuth(request)
+    if (!viaN8n && (!auth.authorized || !auth.userId)) {
       return NextResponse.json({ success: false, error: "No autorizado" }, { status: 401 })
     }
 
@@ -41,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     if (products.length === 0) {
       // Empty or all-invalid input: no DB writes, still log the attempt.
-      await prisma.activityLog.create({
+      if (auth.userId) await prisma.activityLog.create({
         data: {
           adminId: auth.userId,
           action: "csv_import",
@@ -101,7 +104,8 @@ export async function POST(request: NextRequest) {
       { maxWait: 10_000, timeout: 60_000 }
     )
 
-    await prisma.activityLog.create({
+    // n8n runs have no admin user; they are logged in n8n's execution history
+    if (auth.userId) await prisma.activityLog.create({
       data: {
         adminId: auth.userId,
         action: "csv_import",

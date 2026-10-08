@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN ?? "benticuaga-n8n-secret-2026"
 const N8N_WEBHOOK_URL = process.env.N8N_WHATSAPP_WEBHOOK_URL ?? "http://localhost:5678/webhook/whatsapp-assistant"
+const N8N_CSV_WEBHOOK_URL = process.env.N8N_CSV_WEBHOOK_URL ?? "http://localhost:5678/webhook/catalog-csv"
 
 // Meta webhook verification
 export async function GET(request: NextRequest) {
@@ -21,7 +22,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    await fetch(N8N_WEBHOOK_URL, {
+    // Documents (CSV) go to Flow 6 — catalog update; everything else to Flow 1 — assistant
+    const isDocument = body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]?.type === "document"
+
+    await fetch(isDocument ? N8N_CSV_WEBHOOK_URL : N8N_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
