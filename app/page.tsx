@@ -3,6 +3,7 @@ import BrandsCarousel from "@/components/BrandsCarousel";
 import CategoryGrid from "@/components/CategoryGrid";
 import { getAllBrands } from "@/lib/brands";
 import TrustSection from "@/components/TrustSection";
+import Reviews from "@/components/Reviews";
 
 export const revalidate = 3600;
 
@@ -22,6 +23,9 @@ export default async function HomePage() {
 
       {/* ─── Trust / Features section ─────────────────────────────── */}
       <TrustSection />
+
+      {/* ─── Approved customer reviews ────────────────────────────── */}
+      <Reviews />
 
     </>
   );

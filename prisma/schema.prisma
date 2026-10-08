@@ -131,6 +131,7 @@ model Order {
   notes                  String?
   confirmationEmailSent  Boolean   @default(false)
   statusUpdateEmailSent  Boolean   @default(false)
+  review                 Review?
   createdAt              DateTime  @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -138,6 +139,22 @@ model Order {
   @@index([status])
   @@index([createdAt])
   @@index([status, createdAt])
+}
+
+// ============ REVIEWS ============
+model Review {
+  id           String   @id @default(uuid())
+  orderId      String   @unique
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerName String?
+  rating       Int
+  comment      String?
+  sentiment    String   // "positivo" | "neutro" | "negativo"
+  summary      String?
+  approved     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([approved, createdAt])
 }
 
 // ============ ACTIVITY LOG ============
@@ -200,7 +217,7 @@ model SentEmail {
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   to        String
   subject   String
-  type      String   // "ORDER_CONFIRMATION" | "ORDER_SHIPPED" | "ORDER_DELIVERED" | "VERIFICATION" | "PASSWORD_RESET"
+  type      String   // "ORDER_CONFIRMATION" | "ORDER_SHIPPED" | "ORDER_DELIVERED" | "VERIFICATION" | "PASSWORD_RESET" | "ABANDONED_CART_EMAIL" | "ABANDONED_CART_WHATSAPP"
   orderId   String?
   success   Boolean
   createdAt DateTime @default(now())
